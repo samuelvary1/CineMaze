@@ -9,6 +9,7 @@ import {
   ActivityIndicator,
   Alert,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { TMDB_API_KEY } from '@env';
 
 const IMAGE_BASE = 'https://image.tmdb.org/t/p/w500';
@@ -19,11 +20,29 @@ const GameScreen = ({ route }) => {
 
   const [leftNode, setLeftNode] = useState({ type: 'movie', data: movieA });
   const [rightNode, setRightNode] = useState({ type: 'movie', data: movieB });
-  const [path, setPath] = useState([]);
+  const [leftPath, setLeftPath] = useState([{ type: 'movie', data: movieA }]);
+  const [rightPath, setRightPath] = useState([{ type: 'movie', data: movieB }]);
   const [moves, setMoves] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [isConnected, setIsConnected] = useState(false);
 
-  // Utility: fetch top 10 actors for a movie
+  const addToWatchlist = async (movie) => {
+    try {
+      const jsonValue = await AsyncStorage.getItem('watchlist');
+      const current = jsonValue != null ? JSON.parse(jsonValue) : [];
+      const exists = current.find((m) => m.id === movie.id);
+      if (!exists) {
+        const updated = [...current, movie];
+        await AsyncStorage.setItem('watchlist', JSON.stringify(updated));
+        Alert.alert('✅ Added to Watchlist', movie.title);
+      } else {
+        Alert.alert('ℹ️ Already in Watchlist', movie.title);
+      }
+    } catch (e) {
+      Alert.alert('Error', 'Failed to update watchlist.');
+    }
+  };
+
   const fetchMovieWithCredits = async (movieId) => {
     const movieRes = await fetch(
       `https://api.themoviedb.org/3/movie/${movieId}?api_key=${TMDB_API_KEY}&language=en-US`,
@@ -49,7 +68,6 @@ const GameScreen = ({ route }) => {
     };
   };
 
-  // Utility: fetch filmography for an actor
   const fetchActorWithFilmography = async (actorId) => {
     const actorRes = await fetch(
       `https://api.themoviedb.org/3/person/${actorId}?api_key=${TMDB_API_KEY}&language=en-US`,
@@ -79,32 +97,50 @@ const GameScreen = ({ route }) => {
     };
   };
 
+  const updateSide = (side, node) => {
+    const setPath = side === 'A' ? setLeftPath : setRightPath;
+    const getOtherPath = side === 'A' ? rightPath : leftPath;
+    setPath((prev) => {
+      const newPath = [...prev, node];
+
+      const foundMatch = getOtherPath.find(
+        (n) => n.data.id === node.data.id && n.type === node.type,
+      );
+      if (foundMatch && !isConnected) {
+        setIsConnected(true);
+        Alert.alert(
+          '🎉 You Win!',
+          `You connected both sides at ${node.data.title || node.data.name} in ${moves + 1} moves!`,
+        );
+      }
+
+      return newPath;
+    });
+    setMoves((prev) => prev + 1);
+  };
+
   const handleActorPress = async (actor, side) => {
+    if (isConnected) {
+      return;
+    }
     setLoading(true);
     const actorData = await fetchActorWithFilmography(actor.id);
     const node = { type: 'actor', data: actorData };
     side === 'A' ? setLeftNode(node) : setRightNode(node);
-    updatePath(node, side);
+    updateSide(side, node);
     setLoading(false);
   };
 
   const handleMoviePress = async (movie, side) => {
+    if (isConnected) {
+      return;
+    }
     setLoading(true);
     const movieData = await fetchMovieWithCredits(movie.id);
     const node = { type: 'movie', data: movieData };
     side === 'A' ? setLeftNode(node) : setRightNode(node);
-    updatePath(node, side);
+    updateSide(side, node);
     setLoading(false);
-
-    // Check win condition
-    if (movie.id === movieB.id) {
-      Alert.alert('🎉 You Win!', `You connected the movies in ${moves + 1} moves!`);
-    }
-  };
-
-  const updatePath = (node, side) => {
-    setPath((prev) => [...prev, { ...node, side }]);
-    setMoves((prev) => prev + 1);
   };
 
   const renderNode = (node, side) => {
@@ -113,6 +149,9 @@ const GameScreen = ({ route }) => {
       return (
         <View key={node.data.id} style={styles.nodeCard}>
           <Image source={{ uri: posterPath }} style={styles.poster} />
+          <TouchableOpacity onPress={() => addToWatchlist(node.data)}>
+            <Text style={styles.watchlistButton}>+ Add to Watchlist</Text>
+          </TouchableOpacity>
           <Text style={styles.nodeTitle}>{title}</Text>
           <Text style={styles.subTitle}>Top Actors:</Text>
           {actors.map((actor, index) => (
@@ -156,9 +195,10 @@ const GameScreen = ({ route }) => {
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <Text style={styles.title}>
-        🎯 Connect {movieA.title} → {movieB.title}
+        🎯 Connect {movieA.title} ↔ {movieB.title}
       </Text>
       <Text style={styles.moves}>Moves: {moves}</Text>
+      {isConnected && <Text style={styles.win}>✅ You’ve connected the movies!</Text>}
 
       {loading && <ActivityIndicator size="large" style={{ marginVertical: 20 }} />}
 
@@ -184,7 +224,13 @@ const styles = StyleSheet.create({
   },
   moves: {
     fontSize: 16,
-    marginBottom: 15,
+    marginBottom: 10,
+  },
+  win: {
+    fontSize: 16,
+    color: 'green',
+    fontWeight: 'bold',
+    marginBottom: 10,
   },
   nodeRow: {
     flexDirection: 'row',
@@ -220,6 +266,12 @@ const styles = StyleSheet.create({
     marginTop: 4,
     fontSize: 14,
     textAlign: 'center',
+  },
+  watchlistButton: {
+    color: 'green',
+    fontSize: 14,
+    fontWeight: 'bold',
+    marginTop: 8,
   },
 });
 
