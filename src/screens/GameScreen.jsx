@@ -135,8 +135,11 @@ const GameScreen = ({ route }) => {
           <Text style={styles.nodeTitle}>{name}</Text>
           <Text style={styles.subTitle}>Filmography:</Text>
           <ScrollView style={{ maxHeight: 225 }}>
-            {filmography.map((movie) => (
-              <TouchableOpacity key={movie.id} onPress={() => handleMoviePress(movie, side)}>
+            {filmography.map((movie, index) => (
+              <TouchableOpacity
+                key={`${movie.id}-${index}`}
+                onPress={() => handleMoviePress(movie, side)}
+              >
                 <Text style={styles.linkText}>
                   {movie.title} ({movie.release_date.slice(0, 4)})
                 </Text>
