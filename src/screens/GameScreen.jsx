@@ -15,7 +15,7 @@ import { TMDB_API_KEY } from '@env';
 const IMAGE_BASE = 'https://image.tmdb.org/t/p/w500';
 const PLACEHOLDER = 'https://via.placeholder.com/150x225?text=No+Image';
 
-const GameScreen = ({ route }) => {
+const GameScreen = ({ route, navigation }) => {
   const { movieA, movieB } = route.params;
 
   const [leftNode, setLeftNode] = useState({ type: 'movie', data: movieA });
@@ -81,7 +81,7 @@ const GameScreen = ({ route }) => {
 
     const filmography = (credits.cast || [])
       .filter((m) => m.release_date)
-      .sort((a, b) => new Date(a.release_date) - new Date(b.release_date))
+      .sort((a, b) => new Date(b.release_date) - new Date(a.release_date))
       .map((movie) => ({
         id: movie.id,
         title: movie.title,
@@ -200,6 +200,13 @@ const GameScreen = ({ route }) => {
       <Text style={styles.moves}>Moves: {moves}</Text>
       {isConnected && <Text style={styles.win}>✅ You’ve connected the movies!</Text>}
 
+      <TouchableOpacity
+        style={styles.watchlistNavButton}
+        onPress={() => navigation.navigate('WatchlistScreen')}
+      >
+        <Text style={styles.watchlistNavButtonText}>📋 View Watchlist</Text>
+      </TouchableOpacity>
+
       {loading && <ActivityIndicator size="large" style={{ marginVertical: 20 }} />}
 
       <View style={styles.nodeRow}>
@@ -231,6 +238,18 @@ const styles = StyleSheet.create({
     color: 'green',
     fontWeight: 'bold',
     marginBottom: 10,
+  },
+  watchlistNavButton: {
+    backgroundColor: '#007BFF',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 20,
+    marginBottom: 20,
+  },
+  watchlistNavButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 16,
   },
   nodeRow: {
     flexDirection: 'row',

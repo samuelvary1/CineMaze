@@ -8,8 +8,9 @@ import {
   ActivityIndicator,
   ScrollView,
   Alert,
+  TouchableOpacity,
 } from 'react-native';
-import { TMDB_API_KEY } from '@env'; // ✅ imported from .env
+import { TMDB_API_KEY } from '@env';
 
 const BASE_URL = 'https://api.themoviedb.org/3';
 const IMAGE_BASE = 'https://image.tmdb.org/t/p/w500';
@@ -18,7 +19,6 @@ const PLACEHOLDER_IMAGE = 'https://via.placeholder.com/150x225?text=No+Image';
 const fetchMovieWithActors = async () => {
   try {
     const page = Math.floor(Math.random() * 50) + 1;
-
     const discoverRes = await fetch(
       `${BASE_URL}/discover/movie?api_key=${TMDB_API_KEY}&sort_by=popularity.desc&page=${page}`,
     );
@@ -123,6 +123,13 @@ const RandomMoviesScreen = ({ navigation }) => {
         ))}
       </View>
 
+      <TouchableOpacity
+        style={styles.watchlistButton}
+        onPress={() => navigation.navigate('WatchlistScreen')}
+      >
+        <Text style={styles.watchlistButtonText}>📋 View Watchlist</Text>
+      </TouchableOpacity>
+
       <Button title="Shuffle" onPress={fetchTwoMovies} />
 
       <View style={{ marginTop: 15 }}>
@@ -160,7 +167,6 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     gap: 20,
   },
-
   movieCard: {
     flex: 1,
     maxWidth: '48%',
@@ -185,6 +191,18 @@ const styles = StyleSheet.create({
   actorName: {
     fontSize: 14,
     color: '#555',
+  },
+  watchlistButton: {
+    backgroundColor: '#007BFF',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 20,
+    marginBottom: 20,
+  },
+  watchlistButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 16,
   },
 });
 
