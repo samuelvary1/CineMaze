@@ -124,6 +124,13 @@ const RandomMoviesScreen = ({ navigation }) => {
       </View>
 
       <Button title="Shuffle" onPress={fetchTwoMovies} />
+
+      <View style={{ marginTop: 15 }}>
+        <Button
+          title="Start Game with this Pair"
+          onPress={() => navigation.navigate('GameScreen', { movieA, movieB })}
+        />
+      </View>
     </ScrollView>
   );
 };
