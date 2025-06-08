@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useLayoutEffect } from 'react';
 import {
   View,
   Text,
@@ -62,6 +62,19 @@ const RandomMoviesScreen = ({ navigation }) => {
   const [movieA, setMovieA] = useState(null);
   const [movieB, setMovieB] = useState(null);
   const [loading, setLoading] = useState(false);
+
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerRight: () => (
+        <TouchableOpacity
+          onPress={() => navigation.navigate('AccountOverviewScreen')}
+          style={{ marginRight: 15 }}
+        >
+          <Text style={{ fontSize: 18 }}>👤</Text>
+        </TouchableOpacity>
+      ),
+    });
+  }, [navigation]);
 
   const fetchTwoMovies = async () => {
     setLoading(true);

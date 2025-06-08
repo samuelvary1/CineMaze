@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useLayoutEffect } from 'react';
 import {
   View,
   Text,
@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { TMDB_API_KEY } from '@env';
+import uuid from 'react-native-uuid';
 
 const IMAGE_BASE = 'https://image.tmdb.org/t/p/w500';
 const PLACEHOLDER = 'https://via.placeholder.com/150x225?text=No+Image';
@@ -25,6 +26,19 @@ const GameScreen = ({ route, navigation }) => {
   const [moves, setMoves] = useState(0);
   const [loading, setLoading] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
+
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerRight: () => (
+        <TouchableOpacity
+          onPress={() => navigation.navigate('AccountOverviewScreen')}
+          style={{ marginRight: 15 }}
+        >
+          <Text style={{ fontSize: 18 }}>👤</Text>
+        </TouchableOpacity>
+      ),
+    });
+  }, [navigation]);
 
   const addToWatchlist = async (movie) => {
     try {
@@ -108,6 +122,7 @@ const GameScreen = ({ route, navigation }) => {
       );
       if (foundMatch && !isConnected) {
         setIsConnected(true);
+        saveCompletedConnection();
         Alert.alert(
           '🎉 You Win!',
           `You connected both sides at ${node.data.title || node.data.name} in ${moves + 1} moves!`,
@@ -143,6 +158,26 @@ const GameScreen = ({ route, navigation }) => {
     setLoading(false);
   };
 
+  const saveCompletedConnection = async () => {
+    try {
+      const newConnection = {
+        id: uuid.v4(),
+        start: movieA,
+        target: movieB,
+        path: [...leftPath, ...rightPath],
+        timestamp: Date.now(),
+      };
+
+      const jsonValue = await AsyncStorage.getItem('completedConnections');
+      const existing = jsonValue != null ? JSON.parse(jsonValue) : [];
+
+      const updated = [newConnection, ...existing];
+      await AsyncStorage.setItem('completedConnections', JSON.stringify(updated));
+    } catch (e) {
+      Alert.alert('Error', 'Failed to save completed connection.');
+    }
+  };
+
   const renderNode = (node, side) => {
     if (node.type === 'movie') {
       const { title, posterPath, actors } = node.data;
@@ -156,7 +191,7 @@ const GameScreen = ({ route, navigation }) => {
           <Text style={styles.subTitle}>Top Actors:</Text>
           {actors.map((actor, index) => (
             <TouchableOpacity
-              key={`${actor.id}-${index}`}
+              key={`${side}-actor-${actor.id}-${index}`}
               onPress={() => handleActorPress(actor, side)}
             >
               <Text style={styles.linkText}>{actor.name}</Text>
@@ -176,7 +211,7 @@ const GameScreen = ({ route, navigation }) => {
           <ScrollView style={{ maxHeight: 225 }}>
             {filmography.map((movie, index) => (
               <TouchableOpacity
-                key={`${movie.id}-${index}`}
+                key={`${side}-movie-${movie.id}-${index}`}
                 onPress={() => handleMoviePress(movie, side)}
               >
                 <Text style={styles.linkText}>
