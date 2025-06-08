@@ -10,6 +10,7 @@ import {
   Alert,
   TouchableOpacity,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { TMDB_API_KEY } from '@env';
 
 const BASE_URL = 'https://api.themoviedb.org/3';
@@ -24,23 +25,15 @@ const fetchMovieWithActors = async () => {
     );
 
     const discoverData = await discoverRes.json();
-
-    if (!discoverData || !Array.isArray(discoverData.results)) {
-      throw new Error('Invalid discover response');
-    }
-
     const movies = discoverData.results.filter((m) => m.poster_path);
-
     if (movies.length === 0) {
       throw new Error('No movies with posters found');
     }
 
     const randomMovie = movies[Math.floor(Math.random() * movies.length)];
-
     const creditsRes = await fetch(
       `${BASE_URL}/movie/${randomMovie.id}/credits?api_key=${TMDB_API_KEY}`,
     );
-
     const credits = await creditsRes.json();
 
     const topActors = Array.isArray(credits.cast)
@@ -74,7 +67,6 @@ const RandomMoviesScreen = ({ navigation }) => {
     setLoading(true);
     let mA = null;
     let mB = null;
-
     let tries = 0;
     while ((!mA || !mB || mA.id === mB.id) && tries < 5) {
       mA = await fetchMovieWithActors();
@@ -95,6 +87,23 @@ const RandomMoviesScreen = ({ navigation }) => {
     fetchTwoMovies();
   }, []);
 
+  const addToWatchlist = async (movie) => {
+    try {
+      const jsonValue = await AsyncStorage.getItem('watchlist');
+      const current = jsonValue != null ? JSON.parse(jsonValue) : [];
+      const exists = current.find((m) => m.id === movie.id);
+      if (!exists) {
+        const updated = [...current, movie];
+        await AsyncStorage.setItem('watchlist', JSON.stringify(updated));
+        Alert.alert('✅ Added to Watchlist', movie.title);
+      } else {
+        Alert.alert('ℹ️ Already in Watchlist', movie.title);
+      }
+    } catch (e) {
+      Alert.alert('Error', 'Failed to update watchlist.');
+    }
+  };
+
   if (loading || !movieA || !movieB) {
     return (
       <View style={styles.loadingContainer}>
@@ -112,6 +121,9 @@ const RandomMoviesScreen = ({ navigation }) => {
         {[movieA, movieB].map((movie) => (
           <View key={movie.id} style={styles.movieCard}>
             <Image source={{ uri: movie.posterPath || PLACEHOLDER_IMAGE }} style={styles.poster} />
+            <TouchableOpacity onPress={() => addToWatchlist(movie)}>
+              <Text style={styles.watchlistAddButton}>+ Add to Watchlist</Text>
+            </TouchableOpacity>
             <Text style={styles.movieTitle}>{movie.title}</Text>
             <Text style={styles.actorListTitle}>Top Actors:</Text>
             {movie.actors.map((actor) => (
@@ -177,6 +189,12 @@ const styles = StyleSheet.create({
     height: 225,
     borderRadius: 10,
     backgroundColor: '#ccc',
+  },
+  watchlistAddButton: {
+    color: 'green',
+    fontSize: 14,
+    fontWeight: 'bold',
+    marginTop: 6,
   },
   movieTitle: {
     marginTop: 10,
