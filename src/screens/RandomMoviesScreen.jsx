@@ -65,10 +65,11 @@ const RandomMoviesScreen = ({ navigation }) => {
 
   useLayoutEffect(() => {
     navigation.setOptions({
+      // eslint-disable-next-line react/no-unstable-nested-components
       headerRight: () => (
         <TouchableOpacity
           onPress={() => navigation.navigate('AccountOverviewScreen')}
-          style={{ marginRight: 15 }}
+          style={styles.headerRightButton}
         >
           <Text style={{ fontSize: 18 }}>👤</Text>
         </TouchableOpacity>
@@ -121,7 +122,7 @@ const RandomMoviesScreen = ({ navigation }) => {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" />
-        <Text style={{ marginTop: 10 }}>Loading movies...</Text>
+        <Text style={styles.loadingText}>Loading movies...</Text>
       </View>
     );
   }
@@ -157,7 +158,7 @@ const RandomMoviesScreen = ({ navigation }) => {
 
       <Button title="Shuffle" onPress={fetchTwoMovies} />
 
-      <View style={{ marginTop: 15 }}>
+      <View style={styles.startGameButtonContainer}>
         <Button
           title="Start Game with this Pair"
           onPress={() => navigation.navigate('GameScreen', { movieA, movieB })}
@@ -234,6 +235,15 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: 'bold',
     fontSize: 16,
+  },
+  headerRightButton: {
+    marginRight: 15,
+  },
+  startGameButtonContainer: {
+    marginTop: 15,
+  },
+  loadingText: {
+    marginTop: 10,
   },
 });
 
