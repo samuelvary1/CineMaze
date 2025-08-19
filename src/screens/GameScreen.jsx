@@ -235,14 +235,7 @@ const GameScreen = ({ route, navigation }) => {
       <Text style={styles.moves}>Moves: {moves}</Text>
       {isConnected && <Text style={styles.win}>✅ You’ve connected the movies!</Text>}
 
-      <TouchableOpacity
-        style={styles.watchlistNavButton}
-        onPress={() => navigation.navigate('WatchlistScreen')}
-      >
-        <Text style={styles.watchlistNavButtonText}>📋 View Watchlist</Text>
-      </TouchableOpacity>
-
-      {loading && <ActivityIndicator size="large" style={{ marginVertical: 20 }} />}
+      {loading && <ActivityIndicator size="large" style={styles.loadingIndicator} />}
 
       <View style={styles.nodeRow}>
         {renderNode(leftNode, 'A')}
@@ -326,6 +319,9 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: 'bold',
     marginTop: 8,
+  },
+  loadingIndicator: {
+    marginVertical: 20,
   },
 });
 

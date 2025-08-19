@@ -3,8 +3,6 @@ import {
   View,
   Text,
   StyleSheet,
-  Image,
-  Button,
   ActivityIndicator,
   ScrollView,
   Alert,
@@ -12,6 +10,7 @@ import {
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { TMDB_API_KEY } from '@env';
+import MoviesContainer from '../components/MoviesContainer';
 
 const BASE_URL = 'https://api.themoviedb.org/3';
 const IMAGE_BASE = 'https://image.tmdb.org/t/p/w500';
@@ -59,9 +58,9 @@ const fetchMovieWithActors = async () => {
 };
 
 const RandomMoviesScreen = ({ navigation }) => {
-  const [movieA, setMovieA] = useState(null);
-  const [movieB, setMovieB] = useState(null);
+  const [movies, setMovies] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -71,7 +70,7 @@ const RandomMoviesScreen = ({ navigation }) => {
           onPress={() => navigation.navigate('AccountOverviewScreen')}
           style={styles.headerRightButton}
         >
-          <Text style={{ fontSize: 18 }}>👤</Text>
+          <Text style={styles.headerRightText}>👤</Text>
         </TouchableOpacity>
       ),
     });
@@ -90,10 +89,12 @@ const RandomMoviesScreen = ({ navigation }) => {
 
     if (!mA || !mB) {
       Alert.alert('Error', 'Could not load movies. Please try again.');
+      setLoading(false);
+      return;
     }
 
-    setMovieA(mA);
-    setMovieB(mB);
+    setMovies([mA, mB]);
+    setInitialLoading(false);
     setLoading(false);
   };
 
@@ -118,7 +119,7 @@ const RandomMoviesScreen = ({ navigation }) => {
     }
   };
 
-  if (loading || !movieA || !movieB) {
+  if (initialLoading) {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" />
@@ -131,39 +132,28 @@ const RandomMoviesScreen = ({ navigation }) => {
     <ScrollView contentContainerStyle={styles.container}>
       <Text style={styles.title}>🎬 CineMaze</Text>
 
-      <View style={styles.movieContainer}>
-        {[movieA, movieB].map((movie) => (
-          <View key={movie.id} style={styles.movieCard}>
-            <Image source={{ uri: movie.posterPath || PLACEHOLDER_IMAGE }} style={styles.poster} />
-            <TouchableOpacity onPress={() => addToWatchlist(movie)}>
-              <Text style={styles.watchlistAddButton}>+ Add to Watchlist</Text>
-            </TouchableOpacity>
-            <Text style={styles.movieTitle}>{movie.title}</Text>
-            <Text style={styles.actorListTitle}>Top Actors:</Text>
-            {movie.actors.map((actor) => (
-              <Text key={actor.id} style={styles.actorName}>
-                {actor.name}
-              </Text>
-            ))}
-          </View>
-        ))}
-      </View>
+      <MoviesContainer movies={movies} onAddToWatchlist={addToWatchlist} isLoading={loading} />
 
-      <TouchableOpacity
-        style={styles.watchlistButton}
-        onPress={() => navigation.navigate('WatchlistScreen')}
-      >
-        <Text style={styles.watchlistButtonText}>📋 View Watchlist</Text>
+      <TouchableOpacity style={styles.shuffleButton} onPress={fetchTwoMovies}>
+        <Text style={styles.shuffleButtonText}>🎲 Shuffle Movies</Text>
       </TouchableOpacity>
 
-      <Button title="Shuffle" onPress={fetchTwoMovies} />
-
-      <View style={styles.startGameButtonContainer}>
-        <Button
-          title="Start Game with this Pair"
-          onPress={() => navigation.navigate('GameScreen', { movieA, movieB })}
-        />
-      </View>
+      <TouchableOpacity
+        style={[styles.startGameButton, movies.length !== 2 && styles.disabledButton]}
+        onPress={() =>
+          navigation.navigate('GameScreen', {
+            movieA: movies[0],
+            movieB: movies[1],
+          })
+        }
+        disabled={movies.length !== 2}
+      >
+        <Text
+          style={[styles.startGameButtonText, movies.length !== 2 && styles.disabledButtonText]}
+        >
+          🎯 Start Game with this Pair
+        </Text>
+      </TouchableOpacity>
     </ScrollView>
   );
 };
@@ -185,62 +175,55 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 20,
   },
-  movieContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    flexWrap: 'wrap',
-    width: '100%',
-    marginBottom: 20,
-    gap: 20,
+  shuffleButton: {
+    backgroundColor: '#FF6B6B',
+    paddingVertical: 15,
+    paddingHorizontal: 30,
+    borderRadius: 25,
+    marginBottom: 10,
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
   },
-  movieCard: {
-    flex: 1,
-    maxWidth: '48%',
-    alignItems: 'center',
-  },
-  poster: {
-    width: 150,
-    height: 225,
-    borderRadius: 10,
-    backgroundColor: '#ccc',
-  },
-  watchlistAddButton: {
-    color: 'green',
-    fontSize: 14,
-    fontWeight: 'bold',
-    marginTop: 6,
-  },
-  movieTitle: {
-    marginTop: 10,
-    fontSize: 16,
-    fontWeight: '600',
-    textAlign: 'center',
-  },
-  actorListTitle: {
-    marginTop: 10,
-    fontWeight: 'bold',
-  },
-  actorName: {
-    fontSize: 14,
-    color: '#555',
-  },
-  watchlistButton: {
-    backgroundColor: '#007BFF',
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 20,
-    marginBottom: 20,
-  },
-  watchlistButtonText: {
+  shuffleButtonText: {
     color: '#fff',
     fontWeight: 'bold',
-    fontSize: 16,
+    fontSize: 18,
+    textAlign: 'center',
+  },
+  startGameButton: {
+    backgroundColor: '#4ECDC4',
+    paddingVertical: 15,
+    paddingHorizontal: 30,
+    borderRadius: 25,
+    marginTop: 5,
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+  },
+  startGameButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 18,
+    textAlign: 'center',
+  },
+  disabledButton: {
+    backgroundColor: '#ccc',
+    elevation: 0,
+    shadowOpacity: 0,
+  },
+  disabledButtonText: {
+    color: '#999',
   },
   headerRightButton: {
     marginRight: 15,
   },
-  startGameButtonContainer: {
-    marginTop: 15,
+  headerRightText: {
+    fontSize: 18,
   },
   loadingText: {
     marginTop: 10,
