@@ -271,6 +271,9 @@ const RandomMoviesScreen = ({ navigation }) => {
 
       <SubscriptionStatus onUpgrade={() => setShowPaywall(true)} />
 
+      {/* Add spacing to move movie content down */}
+      <View style={styles.spacer} />
+
       <MoviesContainer movies={movies} onAddToWatchlist={addToWatchlist} isLoading={loading} />
 
       <View style={styles.buttonContainer}>
@@ -318,7 +321,7 @@ const styles = StyleSheet.create({
   },
   container: {
     padding: 16,
-    paddingTop: 80, // Increased from 60 to move content down
+    paddingTop: 65, // Reduced from 80 to move content up
     alignItems: 'center',
     paddingBottom: 30,
     backgroundColor: '#B8DDF0', // Powder blue background
@@ -401,7 +404,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     width: '100%',
     gap: 12,
-    marginTop: 35, // Increased from 20 to create more stable spacing
+    marginTop: 60, // Significantly increased from 35 to prevent dynamic height issues
     marginBottom: 12, // Also increased bottom margin for better balance
   },
   shuffleButton: {
@@ -491,6 +494,9 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#2C3E50',
     fontWeight: '500',
+  },
+  spacer: {
+    height: 15,
   },
 });
 

@@ -587,7 +587,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   favoritedActorText: {
-    color: '#4ECDC4',
+    color: '#FFFFFF', // Changed from teal to white
     fontWeight: 'bold',
   },
   favoritedActorButton: {

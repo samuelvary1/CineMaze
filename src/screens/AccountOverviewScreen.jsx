@@ -93,7 +93,7 @@ const AccountOverviewScreen = ({ navigation }) => {
       <View style={styles.logoImageContainer}>
         <View style={styles.appIconContainer}>
           <Image
-            source={require('../assets/images/app-icon.png')}
+            source={require('../assets/images/app-icon-1024.png')}
             style={styles.appIcon}
             resizeMode="contain"
           />
