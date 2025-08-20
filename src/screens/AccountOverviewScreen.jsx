@@ -74,6 +74,13 @@ const AccountOverviewScreen = ({ navigation }) => {
         >
           <Text style={styles.buttonText}>🧩 Completed Games</Text>
         </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.button}
+          onPress={() => navigation.navigate('AchievementsScreen')}
+        >
+          <Text style={styles.buttonText}>🏆 Achievements</Text>
+        </TouchableOpacity>
       </View>
 
       <PaywallModal
@@ -91,12 +98,13 @@ const AccountOverviewScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingTop: 60, // Add top padding to avoid status bar overlap
+    paddingTop: 50, // Reduced from 60
     backgroundColor: '#B8DDF0', // Powder blue background
   },
   header: {
     paddingHorizontal: 20,
-    marginBottom: 24,
+    marginTop: 20, // Added top margin to move header down
+    marginBottom: 16, // Reduced from 24
   },
   logoContainer: {
     alignItems: 'center',
@@ -138,13 +146,14 @@ const styles = StyleSheet.create({
   logoImageContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    marginVertical: 30,
+    marginTop: 30, // Added top margin to move icon down
+    marginBottom: 20, // Keep bottom margin as before
     paddingHorizontal: 20,
   },
   appIconContainer: {
-    width: 160,
-    height: 160,
-    borderRadius: 26,
+    width: 200,
+    height: 200,
+    borderRadius: 32,
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#000',
@@ -157,20 +166,20 @@ const styles = StyleSheet.create({
     elevation: 12,
   },
   appIcon: {
-    width: 140,
-    height: 140,
-    borderRadius: 24,
+    width: 180,
+    height: 180,
+    borderRadius: 30,
   },
   content: {
     flex: 1,
-    padding: 20,
+    padding: 15, // Reduced from 20
     justifyContent: 'center',
     alignItems: 'center',
   },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
-    marginBottom: 40,
+    marginBottom: 25, // Reduced from 40
     textAlign: 'center',
     color: '#2C3E50',
     textShadowColor: 'rgba(255, 255, 255, 0.8)',
@@ -179,10 +188,10 @@ const styles = StyleSheet.create({
   },
   button: {
     backgroundColor: '#4ECDC4',
-    paddingVertical: 16,
+    paddingVertical: 14, // Reduced from 16
     paddingHorizontal: 30,
     borderRadius: 20,
-    marginBottom: 20,
+    marginBottom: 15, // Reduced from 20
     width: '85%',
     alignItems: 'center',
     shadowColor: '#000',

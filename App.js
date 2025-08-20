@@ -11,6 +11,7 @@ import ConnectionPathScreen from './src/screens/ConnectionPathScreen';
 import FavoriteActorsScreen from './src/screens/FavoriteActorsScreen';
 import ActorDetailScreen from './src/screens/ActorDetailScreen';
 import MovieDetailScreen from './src/screens/MovieDetailScreen';
+import AchievementsScreen from './src/screens/AchievementsScreen';
 import SubscriptionService from './src/services/SubscriptionService';
 
 const Stack = createNativeStackNavigator();
@@ -113,6 +114,14 @@ export default function App() {
           component={MovieDetailScreen}
           options={{
             title: 'Movie Details',
+            headerShown: false,
+          }}
+        />
+        <Stack.Screen
+          name="AchievementsScreen"
+          component={AchievementsScreen}
+          options={{
+            title: 'Achievements',
             headerShown: false,
           }}
         />

@@ -21,6 +21,7 @@ const ActorDetailScreen = ({ route, navigation }) => {
   const [actorData, setActorData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isFavorite, setIsFavorite] = useState(false);
+  const [watchlistMovies, setWatchlistMovies] = useState(new Set());
 
   useEffect(() => {
     const loadData = async () => {
@@ -64,6 +65,9 @@ const ActorDetailScreen = ({ route, navigation }) => {
         profilePath: actor.profile_path ? IMAGE_BASE + actor.profile_path : actorProfilePath,
         filmography,
       });
+
+      // Check watchlist status for all movies
+      await checkWatchlistStatus(filmography);
     } catch (error) {
       console.error('Error loading actor data:', error);
       Alert.alert('Error', 'Failed to load actor details.');
@@ -71,6 +75,25 @@ const ActorDetailScreen = ({ route, navigation }) => {
       setLoading(false);
     }
   }, [actorId, actorProfilePath]);
+
+  const checkWatchlistStatus = async (movies) => {
+    try {
+      const jsonValue = await AsyncStorage.getItem('watchlist');
+      const watchlist = jsonValue != null ? JSON.parse(jsonValue) : [];
+      const watchlistIds = new Set(watchlist.map((movie) => movie.id));
+
+      const inWatchlist = new Set();
+      movies.forEach((movie) => {
+        if (watchlistIds.has(movie.id)) {
+          inWatchlist.add(movie.id);
+        }
+      });
+
+      setWatchlistMovies(inWatchlist);
+    } catch (error) {
+      console.error('Error checking watchlist status:', error);
+    }
+  };
 
   const checkIfFavorite = useCallback(async () => {
     const favorite = await FavoriteActorsService.isFavoriteActor(actorId);
@@ -118,6 +141,7 @@ const ActorDetailScreen = ({ route, navigation }) => {
         };
         const updated = [...current, movieData];
         await AsyncStorage.setItem('watchlist', JSON.stringify(updated));
+        setWatchlistMovies((prev) => new Set([...prev, movie.id]));
         Alert.alert('✅ Added to Watchlist', movie.title);
       } else {
         Alert.alert('ℹ️ Already in Watchlist', movie.title);
@@ -183,9 +207,19 @@ const ActorDetailScreen = ({ route, navigation }) => {
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={() => addToWatchlist(movie)}
-                style={styles.watchlistButton}
+                style={[
+                  styles.watchlistButton,
+                  watchlistMovies.has(movie.id) && styles.watchlistButtonAdded,
+                ]}
               >
-                <Text style={styles.watchlistButtonText}>+ Watchlist</Text>
+                <Text
+                  style={[
+                    styles.watchlistButtonText,
+                    watchlistMovies.has(movie.id) && styles.watchlistButtonTextAdded,
+                  ]}
+                >
+                  {watchlistMovies.has(movie.id) ? '✓ In Watchlist' : '+ Watchlist'}
+                </Text>
               </TouchableOpacity>
               <Text style={styles.movieTitle}>{movie.title}</Text>
               <Text style={styles.movieYear}>({movie.release_date.slice(0, 4)})</Text>
@@ -410,6 +444,16 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 10,
     fontWeight: 'bold',
+  },
+  watchlistButtonAdded: {
+    backgroundColor: '#28A745',
+    borderTopColor: '#4CAF50',
+    borderLeftColor: '#4CAF50',
+    borderRightColor: '#1E7E34',
+    borderBottomColor: '#1E7E34',
+  },
+  watchlistButtonTextAdded: {
+    color: '#FFFFFF',
   },
   movieTitle: {
     marginTop: 4,

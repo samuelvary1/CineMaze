@@ -21,10 +21,42 @@ const MovieDetailScreen = ({ route, navigation }) => {
   const { movieId, movieTitle, moviePosterPath } = route.params;
   const [movieData, setMovieData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [isInWatchlist, setIsInWatchlist] = useState(false);
+  const [favoriteActors, setFavoriteActors] = useState(new Set());
 
   const loadMovieData = useCallback(async () => {
     try {
       setLoading(true);
+
+      // Check if movie is in watchlist
+      const checkWatchlistStatus = async () => {
+        try {
+          const jsonValue = await AsyncStorage.getItem('watchlist');
+          const current = jsonValue != null ? JSON.parse(jsonValue) : [];
+          const exists = current.find((m) => m.id === movieId);
+          setIsInWatchlist(!!exists);
+        } catch (error) {
+          console.error('Error checking watchlist status:', error);
+        }
+      };
+
+      await checkWatchlistStatus();
+
+      // Check favorite actors status
+      const checkFavoriteActorsStatus = async (actors) => {
+        try {
+          const favoriteIds = new Set();
+          for (const actor of actors) {
+            const isFavorite = await FavoriteActorsService.isFavoriteActor(actor.id);
+            if (isFavorite) {
+              favoriteIds.add(actor.id);
+            }
+          }
+          setFavoriteActors(favoriteIds);
+        } catch (error) {
+          console.error('Error checking favorite actors status:', error);
+        }
+      };
 
       // Fetch movie details
       const movieRes = await fetch(
@@ -113,6 +145,9 @@ const MovieDetailScreen = ({ route, navigation }) => {
         director: director ? director.name : 'Unknown',
         streamingProviders,
       });
+
+      // Check favorite actors status after movie data is loaded
+      await checkFavoriteActorsStatus(topActors);
     } catch (error) {
       console.error('Error loading movie data:', error);
       Alert.alert('Error', 'Failed to load movie details.');
@@ -138,6 +173,7 @@ const MovieDetailScreen = ({ route, navigation }) => {
         };
         const updated = [...current, movieForWatchlist];
         await AsyncStorage.setItem('watchlist', JSON.stringify(updated));
+        setIsInWatchlist(true);
         Alert.alert('✅ Added to Watchlist', movieTitle);
       } else {
         Alert.alert('ℹ️ Already in Watchlist', movieTitle);
@@ -185,11 +221,15 @@ const MovieDetailScreen = ({ route, navigation }) => {
         return;
       }
 
-      await FavoriteActorsService.addFavoriteActor({
+      const success = await FavoriteActorsService.addFavoriteActor({
         id: actor.id,
         name: actor.name,
         profilePath: actor.profilePath,
       });
+
+      if (success) {
+        setFavoriteActors((prev) => new Set([...prev, actor.id]));
+      }
     } catch (error) {
       console.error('Error adding actor to favorites:', error);
       Alert.alert('Error', 'Failed to add actor to favorites.');
@@ -289,8 +329,18 @@ const MovieDetailScreen = ({ route, navigation }) => {
               ({movieData.release_date ? movieData.release_date.slice(0, 4) : 'Unknown'})
             </Text>
             <Text style={styles.movieDirector}>Directed by {movieData.director}</Text>
-            <TouchableOpacity style={styles.watchlistButton} onPress={addToWatchlist}>
-              <Text style={styles.watchlistButtonText}>+ Add to Watchlist</Text>
+            <TouchableOpacity
+              style={[styles.watchlistButton, isInWatchlist && styles.watchlistButtonAdded]}
+              onPress={addToWatchlist}
+            >
+              <Text
+                style={[
+                  styles.watchlistButtonText,
+                  isInWatchlist && styles.watchlistButtonTextAdded,
+                ]}
+              >
+                {isInWatchlist ? '✓ In Watchlist' : '+ Add to Watchlist'}
+              </Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -317,11 +367,24 @@ const MovieDetailScreen = ({ route, navigation }) => {
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={() => addActorToFavorites(actor)}
-                style={styles.favoriteButton}
+                style={[
+                  styles.favoriteButton,
+                  favoriteActors.has(actor.id) && styles.favoriteButtonAdded,
+                ]}
               >
-                <Text style={styles.favoriteButtonText}>⭐</Text>
+                <Text
+                  style={[
+                    styles.favoriteButtonText,
+                    favoriteActors.has(actor.id) && styles.favoriteButtonTextAdded,
+                  ]}
+                >
+                  {favoriteActors.has(actor.id) ? '✓' : '⭐'}
+                </Text>
               </TouchableOpacity>
               <Text style={styles.actorName}>{actor.name}</Text>
+              {favoriteActors.has(actor.id) && (
+                <Text style={styles.favoriteStatus}>⭐ In Favorites</Text>
+              )}
               {actor.character && <Text style={styles.characterName}>as {actor.character}</Text>}
             </View>
           ))}
@@ -534,6 +597,16 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     textAlign: 'center',
   },
+  watchlistButtonAdded: {
+    backgroundColor: '#28A745',
+    borderTopColor: '#4CAF50',
+    borderLeftColor: '#4CAF50',
+    borderRightColor: '#1E7E34',
+    borderBottomColor: '#1E7E34',
+  },
+  watchlistButtonTextAdded: {
+    color: '#FFFFFF',
+  },
   castTitle: {
     fontSize: 20,
     fontWeight: 'bold',
@@ -589,6 +662,23 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 12,
     fontWeight: 'bold',
+  },
+  favoriteButtonAdded: {
+    backgroundColor: '#28A745',
+    borderTopColor: '#4CAF50',
+    borderLeftColor: '#4CAF50',
+    borderRightColor: '#1E7E34',
+    borderBottomColor: '#1E7E34',
+  },
+  favoriteButtonTextAdded: {
+    color: '#FFFFFF',
+  },
+  favoriteStatus: {
+    fontSize: 9,
+    color: '#28A745',
+    textAlign: 'center',
+    fontWeight: 'bold',
+    marginTop: 2,
   },
   actorName: {
     marginTop: 4,
