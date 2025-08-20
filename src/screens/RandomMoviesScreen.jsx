@@ -14,6 +14,7 @@ import MoviesContainer from '../components/MoviesContainer';
 import PaywallModal from '../components/PaywallModal';
 import SubscriptionStatus from '../components/SubscriptionStatus';
 import DeveloperSettings from '../components/DeveloperSettings';
+import PlayerStats from '../components/PlayerStats';
 import SubscriptionService, { FEATURES } from '../services/SubscriptionService';
 
 const BASE_URL = 'https://api.themoviedb.org/3';
@@ -125,6 +126,7 @@ const RandomMoviesScreen = ({ navigation }) => {
   const [initialLoading, setInitialLoading] = useState(true);
   const [showPaywall, setShowPaywall] = useState(false);
   const [showDeveloperSettings, setShowDeveloperSettings] = useState(false);
+  const [showPlayerStats, setShowPlayerStats] = useState(false);
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -256,9 +258,17 @@ const RandomMoviesScreen = ({ navigation }) => {
     <ScrollView contentContainerStyle={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>🎬 CineMaze</Text>
-        <TouchableOpacity style={styles.devButton} onPress={() => setShowDeveloperSettings(true)}>
-          <Text style={styles.devButtonText}>🔧</Text>
-        </TouchableOpacity>
+        <View style={styles.headerButtons}>
+          <TouchableOpacity style={styles.headerButton} onPress={() => setShowPlayerStats(true)}>
+            <Text style={styles.headerButtonText}>📊</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.headerButton}
+            onPress={() => setShowDeveloperSettings(true)}
+          >
+            <Text style={styles.headerButtonText}>🔧</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       <SubscriptionStatus />
@@ -292,6 +302,8 @@ const RandomMoviesScreen = ({ navigation }) => {
         onClose={() => setShowDeveloperSettings(false)}
         onSubscriptionChanged={loadSubscriptionInfo}
       />
+
+      <PlayerStats visible={showPlayerStats} onClose={() => setShowPlayerStats(false)} />
     </ScrollView>
   );
 };
@@ -320,54 +332,84 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: 'bold',
   },
-  devButton: {
+  headerButtons: {
     position: 'absolute',
     right: 0,
-    backgroundColor: '#f0f0f0',
+    flexDirection: 'row',
+    gap: 8,
+  },
+  headerButton: {
+    backgroundColor: '#f8f9fa',
     borderRadius: 20,
-    width: 40,
-    height: 40,
+    width: 42,
+    height: 42,
     justifyContent: 'center',
     alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 3,
+    borderWidth: 0.5,
+    borderColor: 'rgba(0, 0, 0, 0.1)',
   },
-  devButtonText: {
+  headerButtonText: {
     fontSize: 20,
   },
   shuffleButton: {
     backgroundColor: '#FF6B6B',
-    paddingVertical: 15,
-    paddingHorizontal: 30,
-    borderRadius: 25,
-    marginBottom: 10,
-    elevation: 3,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
+    paddingVertical: 18,
+    paddingHorizontal: 32,
+    borderRadius: 16,
+    marginBottom: 12,
+    shadowColor: '#FF6B6B',
+    shadowOffset: {
+      width: 0,
+      height: 6,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 10,
+    elevation: 8,
+    borderWidth: 0.5,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
   },
   shuffleButtonText: {
     color: '#fff',
     fontWeight: 'bold',
     fontSize: 18,
     textAlign: 'center',
+    textShadowColor: 'rgba(0, 0, 0, 0.2)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
   },
   startGameButton: {
     backgroundColor: '#4ECDC4',
-    paddingVertical: 15,
-    paddingHorizontal: 30,
-    borderRadius: 25,
-    marginTop: 5,
-    elevation: 3,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
+    paddingVertical: 18,
+    paddingHorizontal: 32,
+    borderRadius: 16,
+    marginTop: 8,
+    shadowColor: '#4ECDC4',
+    shadowOffset: {
+      width: 0,
+      height: 6,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 10,
+    elevation: 8,
+    borderWidth: 0.5,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
   },
   startGameButtonText: {
     color: '#fff',
     fontWeight: 'bold',
     fontSize: 18,
     textAlign: 'center',
+    textShadowColor: 'rgba(0, 0, 0, 0.2)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
   },
   disabledButton: {
     backgroundColor: '#ccc',

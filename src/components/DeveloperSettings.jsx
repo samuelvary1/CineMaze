@@ -144,11 +144,17 @@ const DeveloperSettings = ({ visible, onClose, onSubscriptionChanged }) => {
               </Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.actionButton} onPress={resetDailyPlays}>
+            <TouchableOpacity
+              style={[styles.actionButton, styles.resetButton]}
+              onPress={resetDailyPlays}
+            >
               <Text style={styles.actionButtonText}>🔄 Reset Daily Plays</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.actionButton} onPress={simulatePlayUsage}>
+            <TouchableOpacity
+              style={[styles.actionButton, styles.simulateButton]}
+              onPress={simulatePlayUsage}
+            >
               <Text style={styles.actionButtonText}>🎮 Simulate Play Usage</Text>
             </TouchableOpacity>
 
@@ -178,75 +184,132 @@ const styles = StyleSheet.create({
   },
   modal: {
     backgroundColor: 'white',
-    borderRadius: 15,
-    padding: 20,
+    borderRadius: 20,
+    padding: 24,
     width: '90%',
     maxHeight: '80%',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 10,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 20,
+    elevation: 15,
   },
   title: {
-    fontSize: 24,
+    fontSize: 26,
     fontWeight: 'bold',
     textAlign: 'center',
-    marginBottom: 20,
-    color: '#333',
+    marginBottom: 24,
+    color: '#2c3e50',
+    textShadowColor: 'rgba(0, 0, 0, 0.1)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 3,
   },
   statusSection: {
-    backgroundColor: '#f5f5f5',
-    borderRadius: 10,
-    padding: 15,
-    marginBottom: 20,
+    backgroundColor: '#f8f9fa',
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 24,
+    borderWidth: 1,
+    borderColor: '#e9ecef',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   statusTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    marginBottom: 10,
-    color: '#333',
+    marginBottom: 12,
+    color: '#2c3e50',
   },
   statusText: {
     fontSize: 16,
-    marginBottom: 5,
-    color: '#666',
+    marginBottom: 6,
+    color: '#6c757d',
   },
   statusValue: {
     fontWeight: 'bold',
-    color: '#333',
+    color: '#495057',
   },
   actions: {
-    marginBottom: 20,
+    marginBottom: 24,
   },
   actionButton: {
-    backgroundColor: '#007AFF',
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderRadius: 10,
-    marginBottom: 10,
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+    borderRadius: 16,
+    marginBottom: 12,
     alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 6,
+    borderWidth: 0.5,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
   },
   upgradeButton: {
-    backgroundColor: '#34C759',
+    backgroundColor: '#28a745',
+    shadowColor: '#28a745',
   },
   downgradeButton: {
-    backgroundColor: '#FF9500',
+    backgroundColor: '#fd7e14',
+    shadowColor: '#fd7e14',
+  },
+  resetButton: {
+    backgroundColor: '#6f42c1',
+    shadowColor: '#6f42c1',
+  },
+  simulateButton: {
+    backgroundColor: '#20c997',
+    shadowColor: '#20c997',
   },
   dangerButton: {
-    backgroundColor: '#FF3B30',
+    backgroundColor: '#dc3545',
+    shadowColor: '#dc3545',
   },
   actionButtonText: {
     color: 'white',
     fontSize: 16,
     fontWeight: 'bold',
+    textShadowColor: 'rgba(0, 0, 0, 0.2)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
   },
   closeButton: {
-    backgroundColor: '#8E8E93',
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderRadius: 10,
+    backgroundColor: '#6c757d',
+    paddingVertical: 16,
+    paddingHorizontal: 32,
+    borderRadius: 16,
     alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 5,
+    borderWidth: 0.5,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
   },
   closeButtonText: {
     color: 'white',
     fontSize: 16,
     fontWeight: 'bold',
+    textShadowColor: 'rgba(0, 0, 0, 0.2)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
   },
 });
 

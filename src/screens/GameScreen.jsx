@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useLayoutEffect } from 'react';
+import React, { useState, useLayoutEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -12,9 +12,18 @@ import {
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { TMDB_API_KEY } from '@env';
 import uuid from 'react-native-uuid';
+import GameStatsService from '../services/GameStatsService';
+import GameRewards from '../components/GameRewards';
 
 const IMAGE_BASE = 'https://image.tmdb.org/t/p/w500';
 const PLACEHOLDER = 'https://via.placeholder.com/150x225?text=No+Image';
+
+// Header right button component
+const HeaderRightButton = ({ onPress, style, textStyle }) => (
+  <TouchableOpacity onPress={onPress} style={style}>
+    <Text style={textStyle}>👤</Text>
+  </TouchableOpacity>
+);
 
 const GameScreen = ({ route, navigation }) => {
   const { movieA, movieB } = route.params;
@@ -26,19 +35,26 @@ const GameScreen = ({ route, navigation }) => {
   const [moves, setMoves] = useState(0);
   const [loading, setLoading] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
+  const [showRewards, setShowRewards] = useState(false);
+  const [gameRewards, setGameRewards] = useState(null);
+
+  // Header right component callback
+  const renderHeaderRight = useCallback(
+    () => (
+      <HeaderRightButton
+        onPress={() => navigation.navigate('AccountOverviewScreen')}
+        style={styles.headerRightButton}
+        textStyle={styles.headerRightText}
+      />
+    ),
+    [navigation],
+  );
 
   useLayoutEffect(() => {
     navigation.setOptions({
-      headerRight: () => (
-        <TouchableOpacity
-          onPress={() => navigation.navigate('AccountOverviewScreen')}
-          style={{ marginRight: 15 }}
-        >
-          <Text style={{ fontSize: 18 }}>👤</Text>
-        </TouchableOpacity>
-      ),
+      headerRight: renderHeaderRight,
     });
-  }, [navigation]);
+  }, [navigation, renderHeaderRight]);
 
   const addToWatchlist = async (movie) => {
     try {
@@ -123,10 +139,7 @@ const GameScreen = ({ route, navigation }) => {
       if (foundMatch && !isConnected) {
         setIsConnected(true);
         saveCompletedConnection();
-        Alert.alert(
-          '🎉 You Win!',
-          `You connected both sides at ${node.data.title || node.data.name} in ${moves + 1} moves!`,
-        );
+        handleGameComplete(moves + 1);
       }
 
       return newPath;
@@ -164,8 +177,9 @@ const GameScreen = ({ route, navigation }) => {
         id: uuid.v4(),
         start: movieA,
         target: movieB,
-        path: [...leftPath, ...rightPath],
-        timestamp: Date.now(),
+        path: [...leftPath, ...rightPath.slice(1).reverse()],
+        moves: moves + 1,
+        timestamp: new Date().toISOString(),
       };
 
       const jsonValue = await AsyncStorage.getItem('completedConnections');
@@ -175,6 +189,64 @@ const GameScreen = ({ route, navigation }) => {
       await AsyncStorage.setItem('completedConnections', JSON.stringify(updated));
     } catch (e) {
       Alert.alert('Error', 'Failed to save completed connection.');
+    }
+  };
+
+  const handleGameComplete = async (finalMoves) => {
+    try {
+      // Collect all actors and movies from the paths
+      const allActors = [];
+      const allMovies = [];
+
+      [...leftPath, ...rightPath].forEach((pathNode) => {
+        if (pathNode.type === 'actor') {
+          allActors.push(pathNode.data);
+        } else if (pathNode.type === 'movie') {
+          allMovies.push(pathNode.data);
+          // Add actors from the movie
+          if (pathNode.data.actors) {
+            allActors.push(...pathNode.data.actors);
+          }
+        }
+      });
+
+      // Record game completion with stats service
+      const result = await GameStatsService.recordGameComplete({
+        moves: finalMoves,
+        actors: allActors,
+        movies: allMovies,
+        isWin: true,
+      });
+
+      // Prepare rewards data
+      const rewardsData = {
+        moves: finalMoves,
+        expGained: result.expGained,
+        stats: result.stats,
+        achievements: result.newAchievements,
+      };
+
+      // Check for level up
+      if (result.newAchievements?.some((a) => a.id === 'level_up')) {
+        rewardsData.levelUp = true;
+        rewardsData.newLevel = result.stats.level;
+      }
+
+      // Show standard win alert first
+      Alert.alert('🎉 You Win!', `You connected both sides in ${finalMoves} moves!`, [
+        {
+          text: 'View Rewards',
+          onPress: () => {
+            setGameRewards(rewardsData);
+            setShowRewards(true);
+          },
+        },
+        { text: 'Continue', style: 'cancel' },
+      ]);
+    } catch (error) {
+      console.error('Error handling game completion:', error);
+      // Fallback to simple alert
+      Alert.alert('🎉 You Win!', `You connected both sides in ${finalMoves} moves!`);
     }
   };
 
@@ -208,7 +280,7 @@ const GameScreen = ({ route, navigation }) => {
           <Image source={{ uri: profilePath }} style={styles.poster} />
           <Text style={styles.nodeTitle}>{name}</Text>
           <Text style={styles.subTitle}>Filmography:</Text>
-          <ScrollView style={{ maxHeight: 225 }}>
+          <ScrollView style={styles.actorScrollView}>
             {filmography.map((movie, index) => (
               <TouchableOpacity
                 key={`${side}-movie-${movie.id}-${index}`}
@@ -241,6 +313,12 @@ const GameScreen = ({ route, navigation }) => {
         {renderNode(leftNode, 'A')}
         {renderNode(rightNode, 'B')}
       </View>
+
+      <GameRewards
+        visible={showRewards}
+        onClose={() => setShowRewards(false)}
+        rewards={gameRewards}
+      />
     </ScrollView>
   );
 };
@@ -322,6 +400,15 @@ const styles = StyleSheet.create({
   },
   loadingIndicator: {
     marginVertical: 20,
+  },
+  headerRightButton: {
+    marginRight: 15,
+  },
+  headerRightText: {
+    fontSize: 18,
+  },
+  actorScrollView: {
+    maxHeight: 225,
   },
 });
 
