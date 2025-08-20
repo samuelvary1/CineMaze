@@ -18,15 +18,73 @@ const PLACEHOLDER_IMAGE = 'https://via.placeholder.com/150x225?text=No+Image';
 
 const fetchMovieWithActors = async () => {
   try {
-    const page = Math.floor(Math.random() * 50) + 1;
+    const page = Math.floor(Math.random() * 20) + 1; // Reduced from 50 to 20 for better quality
     const discoverRes = await fetch(
-      `${BASE_URL}/discover/movie?api_key=${TMDB_API_KEY}&sort_by=popularity.desc&page=${page}`,
+      `${BASE_URL}/discover/movie?api_key=${TMDB_API_KEY}&sort_by=popularity.desc&page=${page}&with_original_language=en&vote_count.gte=100&vote_average.gte=5.0&certification_country=US&certification.lte=R&include_adult=false`,
     );
 
     const discoverData = await discoverRes.json();
-    const movies = discoverData.results.filter((m) => m.poster_path);
+
+    // Additional filtering for quality and appropriateness
+    const movies = discoverData.results.filter((m) => {
+      // Must have poster
+      if (!m.poster_path) {
+        return false;
+      }
+
+      // Filter out adult content
+      if (m.adult) {
+        return false;
+      }
+
+      // Must have reasonable vote count (popular enough)
+      if (m.vote_count < 50) {
+        return false;
+      }
+
+      // Must have decent rating
+      if (m.vote_average < 4.5) {
+        return false;
+      }
+
+      // Filter out genres that might contain inappropriate content
+      // Genre IDs: 99=Documentary, 10770=TV Movie might have questionable content
+      const badGenreIds = [10770]; // TV Movies often have lower quality
+      if (m.genre_ids && m.genre_ids.some((id) => badGenreIds.includes(id))) {
+        return false;
+      }
+
+      // Filter out movies with suspicious keywords in title
+      const suspiciousKeywords = [
+        'xxx',
+        'sex',
+        'porn',
+        'erotic',
+        'nude',
+        'naked',
+        'seduction',
+        'temptation',
+        'desire',
+        'lust',
+        'passion',
+        'intimate',
+        'sensual',
+      ];
+      const title = m.title.toLowerCase();
+      if (suspiciousKeywords.some((keyword) => title.includes(keyword))) {
+        return false;
+      }
+
+      // Filter out very old movies (before 1970) as they might have quality issues
+      if (m.release_date && new Date(m.release_date).getFullYear() < 1970) {
+        return false;
+      }
+
+      return true;
+    });
+
     if (movies.length === 0) {
-      throw new Error('No movies with posters found');
+      throw new Error('No suitable movies found');
     }
 
     const randomMovie = movies[Math.floor(Math.random() * movies.length)];
