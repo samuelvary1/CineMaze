@@ -48,7 +48,11 @@ const SubscriptionStatus = ({ onUpgrade }) => {
       <View style={styles.statusContent}>
         <Text style={styles.tierText}>{isPremium ? '✨ Premium' : '🆓 Free'}</Text>
         <Text style={styles.playsText}>
-          {isPremium ? 'Unlimited plays' : `${subscriptionInfo.playsRemaining} plays remaining`}
+          {isPremium
+            ? 'Unlimited plays'
+            : subscriptionInfo.playsRemaining === 1
+            ? `${subscriptionInfo.playsRemaining} play left today`
+            : `${subscriptionInfo.playsRemaining} plays remaining`}
         </Text>
         {isPremium && subscriptionInfo.expiryDate && (
           <Text style={styles.expiryText}>

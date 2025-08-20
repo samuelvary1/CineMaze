@@ -35,13 +35,51 @@ export default function App() {
 
   return (
     <NavigationContainer>
-      <Stack.Navigator initialRouteName="RandomMoviesScreen">
-        <Stack.Screen name="RandomMoviesScreen" component={RandomMoviesScreen} />
-        <Stack.Screen name="GameScreen" component={GameScreen} />
-        <Stack.Screen name="WatchlistScreen" component={WatchlistScreen} />
-        <Stack.Screen name="CompletedConnectionsScreen" component={CompletedConnectionsScreen} />
-        <Stack.Screen name="ConnectionPathScreen" component={ConnectionPathScreen} />
-        <Stack.Screen name="AccountOverviewScreen" component={AccountOverviewScreen} />
+      <Stack.Navigator
+        initialRouteName="RandomMoviesScreen"
+        screenOptions={{
+          headerStyle: {
+            backgroundColor: '#B8DDF0',
+          },
+          headerTintColor: '#2C3E50',
+          headerTitleStyle: {
+            fontWeight: 'bold',
+          },
+        }}
+      >
+        <Stack.Screen
+          name="RandomMoviesScreen"
+          component={RandomMoviesScreen}
+          options={{
+            title: 'CineMaze',
+            headerShown: false, // Hide header since we have custom header in component
+          }}
+        />
+        <Stack.Screen
+          name="GameScreen"
+          component={GameScreen}
+          options={{ title: 'Movie Connection Game' }}
+        />
+        <Stack.Screen
+          name="WatchlistScreen"
+          component={WatchlistScreen}
+          options={{ title: 'My Watchlist' }}
+        />
+        <Stack.Screen
+          name="CompletedConnectionsScreen"
+          component={CompletedConnectionsScreen}
+          options={{ title: 'Completed Games' }}
+        />
+        <Stack.Screen
+          name="ConnectionPathScreen"
+          component={ConnectionPathScreen}
+          options={{ title: 'Connection Path' }}
+        />
+        <Stack.Screen
+          name="AccountOverviewScreen"
+          component={AccountOverviewScreen}
+          options={{ title: 'Account' }}
+        />
       </Stack.Navigator>
     </NavigationContainer>
   );

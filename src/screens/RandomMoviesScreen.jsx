@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useLayoutEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -128,20 +128,6 @@ const RandomMoviesScreen = ({ navigation }) => {
   const [showDeveloperSettings, setShowDeveloperSettings] = useState(false);
   const [showPlayerStats, setShowPlayerStats] = useState(false);
 
-  useLayoutEffect(() => {
-    navigation.setOptions({
-      // eslint-disable-next-line react/no-unstable-nested-components
-      headerRight: () => (
-        <TouchableOpacity
-          onPress={() => navigation.navigate('AccountOverviewScreen')}
-          style={styles.headerRightButton}
-        >
-          <Text style={styles.headerRightText}>👤</Text>
-        </TouchableOpacity>
-      ),
-    });
-  }, [navigation]);
-
   // Load subscription info on component mount
   useEffect(() => {
     loadSubscriptionInfo();
@@ -257,7 +243,13 @@ const RandomMoviesScreen = ({ navigation }) => {
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>🎬 CineMaze</Text>
+        <View style={styles.logoContainer}>
+          <View style={styles.logoTextContainer}>
+            <Text style={styles.logoText}>CineMaze</Text>
+            <View style={styles.logoAccent} />
+          </View>
+          <Text style={styles.tagline}>Discover Movies Through Play</Text>
+        </View>
         <View style={styles.headerButtons}>
           <TouchableOpacity style={styles.headerButton} onPress={() => setShowPlayerStats(true)}>
             <Text style={styles.headerButtonText}>📊</Text>
@@ -267,6 +259,12 @@ const RandomMoviesScreen = ({ navigation }) => {
             onPress={() => setShowDeveloperSettings(true)}
           >
             <Text style={styles.headerButtonText}>🔧</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.headerButton}
+            onPress={() => navigation.navigate('AccountOverviewScreen')}
+          >
+            <Text style={styles.headerButtonText}>👤</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -316,38 +314,75 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingTop: 100,
+    backgroundColor: '#B8DDF0', // Powder blue background
   },
   container: {
-    padding: 20,
+    padding: 16,
+    paddingTop: 60, // Add top padding to avoid status bar overlap
     alignItems: 'center',
-    paddingBottom: 40,
+    paddingBottom: 30,
+    backgroundColor: '#B8DDF0', // Powder blue background
+    minHeight: '100%',
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
+    justifyContent: 'space-between',
     width: '100%',
-    marginBottom: 20,
-    position: 'relative',
+    marginBottom: 16,
+    paddingHorizontal: 4,
   },
-  title: {
+  logoContainer: {
+    alignItems: 'flex-start',
+    flex: 1,
+  },
+  logoTextContainer: {
+    position: 'relative',
+    marginBottom: 4,
+  },
+  logoText: {
     fontSize: 28,
-    fontWeight: 'bold',
+    fontWeight: '800',
+    color: '#2C3E50',
+    textShadowColor: 'rgba(255, 255, 255, 0.8)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
+    letterSpacing: -0.5,
+  },
+  logoAccent: {
+    position: 'absolute',
+    bottom: -2,
+    left: 0,
+    right: 0,
+    height: 3,
+    backgroundColor: '#4ECDC4',
+    borderRadius: 2,
+    shadowColor: '#4ECDC4',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.3,
+    shadowRadius: 2,
+  },
+  tagline: {
+    fontSize: 14,
+    color: '#34495E',
+    fontWeight: '500',
+    fontStyle: 'italic',
+    letterSpacing: 0.3,
+    opacity: 0.8,
   },
   headerButtons: {
-    position: 'absolute',
-    right: 0,
     flexDirection: 'row',
     gap: 8,
+    alignItems: 'flex-start',
   },
   headerButton: {
-    backgroundColor: '#f8f9fa',
+    backgroundColor: '#FFFFFF',
     borderRadius: 20,
-    width: 42,
-    height: 42,
+    width: 40,
+    height: 40,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#000',
+    shadowColor: '#2C3E50',
     shadowOffset: {
       width: 0,
       height: 2,
@@ -356,7 +391,7 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
     borderWidth: 0.5,
-    borderColor: 'rgba(0, 0, 0, 0.1)',
+    borderColor: 'rgba(44, 62, 80, 0.1)',
   },
   headerButtonText: {
     fontSize: 20,
@@ -365,25 +400,30 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     width: '100%',
     gap: 12,
-    marginTop: 16,
+    marginTop: 8,
     marginBottom: 8,
   },
   shuffleButton: {
     backgroundColor: '#FF6B6B',
-    paddingVertical: 14,
+    paddingVertical: 16,
     paddingHorizontal: 20,
-    borderRadius: 12,
+    borderRadius: 20,
     flex: 1,
-    shadowColor: '#FF6B6B',
+    shadowColor: '#000',
     shadowOffset: {
       width: 0,
-      height: 4,
+      height: 6,
     },
-    shadowOpacity: 0.25,
-    shadowRadius: 6,
-    elevation: 6,
-    borderWidth: 0.5,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+    borderWidth: 3,
+    borderTopColor: '#FF9999',
+    borderLeftColor: '#FF9999',
+    borderRightColor: '#CC5555',
+    borderBottomColor: '#CC5555',
+    // Rubber button appearance
+    transform: [{ perspective: 1000 }],
   },
   shuffleButtonText: {
     color: '#fff',
@@ -396,20 +436,25 @@ const styles = StyleSheet.create({
   },
   startGameButton: {
     backgroundColor: '#4ECDC4',
-    paddingVertical: 14,
+    paddingVertical: 16,
     paddingHorizontal: 20,
-    borderRadius: 12,
+    borderRadius: 20,
     flex: 1,
-    shadowColor: '#4ECDC4',
+    shadowColor: '#000',
     shadowOffset: {
       width: 0,
-      height: 4,
+      height: 6,
     },
-    shadowOpacity: 0.25,
-    shadowRadius: 6,
-    elevation: 6,
-    borderWidth: 0.5,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+    borderWidth: 3,
+    borderTopColor: '#7EDDDD',
+    borderLeftColor: '#7EDDDD',
+    borderRightColor: '#3EBBBB',
+    borderBottomColor: '#3EBBBB',
+    // Rubber button appearance
+    transform: [{ perspective: 1000 }],
   },
   startGameButtonText: {
     color: '#fff',
@@ -421,12 +466,18 @@ const styles = StyleSheet.create({
     textShadowRadius: 2,
   },
   disabledButton: {
-    backgroundColor: '#ccc',
-    elevation: 0,
-    shadowOpacity: 0,
+    backgroundColor: '#BDC3C7',
+    elevation: 2,
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 3 },
+    borderTopColor: '#D5DBDB',
+    borderLeftColor: '#D5DBDB',
+    borderRightColor: '#A8B5B5',
+    borderBottomColor: '#A8B5B5',
   },
   disabledButtonText: {
-    color: '#999',
+    color: '#7F8C8D',
   },
   headerRightButton: {
     marginRight: 15,
@@ -435,7 +486,10 @@ const styles = StyleSheet.create({
     fontSize: 18,
   },
   loadingText: {
-    marginTop: 10,
+    marginTop: 12,
+    fontSize: 16,
+    color: '#2C3E50',
+    fontWeight: '500',
   },
 });
 

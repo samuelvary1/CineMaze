@@ -6,9 +6,8 @@ const PLACEHOLDER_IMAGE = 'https://via.placeholder.com/150x225?text=No+Image';
 const MovieCard = memo(({ movie, onAddToWatchlist }) => {
   return (
     <View style={styles.movieCard}>
-      <Image source={{ uri: movie.posterPath || PLACEHOLDER_IMAGE }} style={styles.poster} />
-      <TouchableOpacity onPress={() => onAddToWatchlist(movie)}>
-        <Text style={styles.watchlistAddButton}>+ Add to Watchlist</Text>
+      <TouchableOpacity onPress={() => onAddToWatchlist(movie)} activeOpacity={0.8}>
+        <Image source={{ uri: movie.posterPath || PLACEHOLDER_IMAGE }} style={styles.poster} />
       </TouchableOpacity>
       <Text style={styles.movieTitle}>{movie.title}</Text>
       <Text style={styles.actorListTitle}>Top Actors:</Text>
@@ -30,30 +29,43 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   poster: {
-    width: 150,
-    height: 225,
-    borderRadius: 10,
+    width: 140, // Slightly smaller to fit better
+    height: 210, // Proportionally smaller
+    borderRadius: 12,
     backgroundColor: '#ccc',
-  },
-  watchlistAddButton: {
-    color: 'green',
-    fontSize: 14,
-    fontWeight: 'bold',
-    marginTop: 6,
+    // Raised edge effects
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 8,
+    // Border effect for raised appearance
+    borderWidth: 2,
+    borderTopColor: '#FFFFFF',
+    borderLeftColor: '#FFFFFF',
+    borderRightColor: '#CCCCCC',
+    borderBottomColor: '#CCCCCC',
   },
   movieTitle: {
-    marginTop: 10,
-    fontSize: 16,
+    marginTop: 8, // Reduced from 10
+    fontSize: 15, // Slightly smaller
     fontWeight: '600',
     textAlign: 'center',
+    color: '#2C3E50',
   },
   actorListTitle: {
-    marginTop: 10,
+    marginTop: 6, // Reduced from 10
     fontWeight: 'bold',
+    fontSize: 13, // Slightly smaller
+    color: '#34495E',
   },
   actorName: {
-    fontSize: 14,
+    fontSize: 13, // Slightly smaller
     color: '#555',
+    lineHeight: 16, // Tighter line spacing
   },
 });
 

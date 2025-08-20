@@ -31,8 +31,8 @@ MoviesContainer.displayName = 'MoviesContainer';
 const styles = StyleSheet.create({
   containerWrapper: {
     width: '100%',
-    minHeight: 520, // Generous height to accommodate all content
-    marginBottom: 20,
+    minHeight: 420, // Reduced from 520 to condense layout
+    marginBottom: 12, // Reduced from 20
     position: 'relative',
   },
   movieContainer: {
@@ -40,7 +40,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     flexWrap: 'wrap',
     width: '100%',
-    gap: 20,
+    gap: 16, // Reduced from 20
   },
   loadingOverlay: {
     position: 'absolute',
