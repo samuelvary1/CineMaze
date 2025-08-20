@@ -12,24 +12,53 @@ import SubscriptionService from '../services/SubscriptionService';
 
 const PaywallModal = ({ visible, onClose, onSubscribe, playsRemaining }) => {
   const [loading, setLoading] = useState(false);
+  const [restoring, setRestoring] = useState(false);
 
   const handleSubscribe = async () => {
     setLoading(true);
     try {
       const result = await SubscriptionService.purchaseSubscription();
       if (result.success) {
-        Alert.alert(
-          '🎉 Welcome to Premium!',
-          'You now have unlimited plays and access to the watchlist feature!',
-          [{ text: 'Great!', onPress: onSubscribe }],
-        );
+        if (result.processing) {
+          Alert.alert(
+            '🕐 Processing',
+            'Your purchase is being processed. This may take a moment.',
+            [{ text: 'OK' }],
+          );
+        } else {
+          Alert.alert(
+            '🎉 Welcome to Premium!',
+            'You now have unlimited plays and access to the watchlist feature!',
+            [{ text: 'Great!', onPress: onSubscribe }],
+          );
+        }
       } else {
-        Alert.alert('Purchase Failed', 'Please try again later.');
+        Alert.alert('Purchase Failed', result.error || 'Please try again later.');
       }
     } catch (error) {
       Alert.alert('Error', 'Something went wrong. Please try again.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleRestorePurchases = async () => {
+    setRestoring(true);
+    try {
+      const result = await SubscriptionService.restorePurchases();
+      if (result.success && result.restored) {
+        Alert.alert('✅ Purchases Restored!', 'Your premium subscription has been restored!', [
+          { text: 'Great!', onPress: onSubscribe },
+        ]);
+      } else if (result.success && !result.restored) {
+        Alert.alert('No Purchases Found', 'No active subscriptions found to restore.');
+      } else {
+        Alert.alert('Restore Failed', result.error || 'Please try again later.');
+      }
+    } catch (error) {
+      Alert.alert('Error', 'Failed to restore purchases. Please try again.');
+    } finally {
+      setRestoring(false);
     }
   };
 
@@ -78,12 +107,24 @@ const PaywallModal = ({ visible, onClose, onSubscribe, playsRemaining }) => {
             )}
           </TouchableOpacity>
 
+          <TouchableOpacity
+            style={[styles.restoreButton, restoring && styles.disabledButton]}
+            onPress={handleRestorePurchases}
+            disabled={restoring}
+          >
+            {restoring ? (
+              <ActivityIndicator color="#4ECDC4" />
+            ) : (
+              <Text style={styles.restoreButtonText}>Restore Purchases</Text>
+            )}
+          </TouchableOpacity>
+
           <TouchableOpacity style={styles.closeButton} onPress={onClose}>
             <Text style={styles.closeButtonText}>Maybe Later</Text>
           </TouchableOpacity>
 
           <Text style={styles.disclaimer}>
-            * This is a demo. No actual payment will be processed.
+            Subscriptions managed through your App Store/Play Store account
           </Text>
         </View>
       </View>
@@ -201,6 +242,30 @@ const styles = StyleSheet.create({
   disabledButton: {
     backgroundColor: '#ccc',
     shadowColor: '#ccc',
+  },
+  restoreButton: {
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    backgroundColor: 'transparent',
+    borderRadius: 12,
+    marginTop: 10,
+    marginBottom: 15,
+    borderWidth: 2,
+    borderColor: '#4ECDC4',
+    shadowColor: '#4ECDC4',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  restoreButtonText: {
+    color: '#4ECDC4',
+    fontSize: 16,
+    fontWeight: 'bold',
+    textAlign: 'center',
   },
   closeButton: {
     paddingVertical: 12,
