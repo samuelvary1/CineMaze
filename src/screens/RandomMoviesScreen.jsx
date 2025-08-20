@@ -11,6 +11,10 @@ import {
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { TMDB_API_KEY } from '@env';
 import MoviesContainer from '../components/MoviesContainer';
+import PaywallModal from '../components/PaywallModal';
+import SubscriptionStatus from '../components/SubscriptionStatus';
+import DeveloperSettings from '../components/DeveloperSettings';
+import SubscriptionService, { FEATURES } from '../services/SubscriptionService';
 
 const BASE_URL = 'https://api.themoviedb.org/3';
 const IMAGE_BASE = 'https://image.tmdb.org/t/p/w500';
@@ -119,6 +123,8 @@ const RandomMoviesScreen = ({ navigation }) => {
   const [movies, setMovies] = useState([]);
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
+  const [showPaywall, setShowPaywall] = useState(false);
+  const [showDeveloperSettings, setShowDeveloperSettings] = useState(false);
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -133,6 +139,20 @@ const RandomMoviesScreen = ({ navigation }) => {
       ),
     });
   }, [navigation]);
+
+  // Load subscription info on component mount
+  useEffect(() => {
+    loadSubscriptionInfo();
+  }, []);
+
+  const loadSubscriptionInfo = async () => {
+    try {
+      const info = await SubscriptionService.getSubscriptionInfo();
+      console.log('Subscription info:', info);
+    } catch (error) {
+      console.error('Error loading subscription info:', error);
+    }
+  };
 
   const fetchTwoMovies = async () => {
     setLoading(true);
@@ -162,6 +182,20 @@ const RandomMoviesScreen = ({ navigation }) => {
 
   const addToWatchlist = async (movie) => {
     try {
+      // Check if user has watchlist feature
+      const hasWatchlist = await SubscriptionService.hasFeature(FEATURES.WATCHLIST);
+      if (!hasWatchlist) {
+        Alert.alert(
+          '🔒 Premium Feature',
+          'Watchlist is available with Premium subscription. Upgrade to save your favorite movies!',
+          [
+            { text: 'Cancel', style: 'cancel' },
+            { text: 'Upgrade', onPress: () => setShowPaywall(true) },
+          ],
+        );
+        return;
+      }
+
       const jsonValue = await AsyncStorage.getItem('watchlist');
       const current = jsonValue != null ? JSON.parse(jsonValue) : [];
       const exists = current.find((m) => m.id === movie.id);
@@ -177,6 +211,38 @@ const RandomMoviesScreen = ({ navigation }) => {
     }
   };
 
+  const handleStartGame = async () => {
+    try {
+      // Check if user can play
+      const canPlay = await SubscriptionService.canPlay();
+      if (!canPlay) {
+        setShowPaywall(true);
+        return;
+      }
+
+      // Increment play count for free users
+      const hasUnlimitedPlays = await SubscriptionService.hasFeature(FEATURES.UNLIMITED_PLAYS);
+      if (!hasUnlimitedPlays) {
+        await SubscriptionService.incrementDailyPlays();
+      }
+
+      // Navigate to game
+      navigation.navigate('GameScreen', {
+        movieA: movies[0],
+        movieB: movies[1],
+      });
+    } catch (error) {
+      console.error('Error starting game:', error);
+      Alert.alert('Error', 'Failed to start game. Please try again.');
+    }
+  };
+
+  const handleSubscriptionSuccess = async () => {
+    setShowPaywall(false);
+    await loadSubscriptionInfo();
+    Alert.alert('🎉 Welcome to Premium!', 'You can now start the game!');
+  };
+
   if (initialLoading) {
     return (
       <View style={styles.loadingContainer}>
@@ -188,7 +254,14 @@ const RandomMoviesScreen = ({ navigation }) => {
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.title}>🎬 CineMaze</Text>
+      <View style={styles.header}>
+        <Text style={styles.title}>🎬 CineMaze</Text>
+        <TouchableOpacity style={styles.devButton} onPress={() => setShowDeveloperSettings(true)}>
+          <Text style={styles.devButtonText}>🔧</Text>
+        </TouchableOpacity>
+      </View>
+
+      <SubscriptionStatus />
 
       <MoviesContainer movies={movies} onAddToWatchlist={addToWatchlist} isLoading={loading} />
 
@@ -198,12 +271,7 @@ const RandomMoviesScreen = ({ navigation }) => {
 
       <TouchableOpacity
         style={[styles.startGameButton, movies.length !== 2 && styles.disabledButton]}
-        onPress={() =>
-          navigation.navigate('GameScreen', {
-            movieA: movies[0],
-            movieB: movies[1],
-          })
-        }
+        onPress={handleStartGame}
         disabled={movies.length !== 2}
       >
         <Text
@@ -212,6 +280,18 @@ const RandomMoviesScreen = ({ navigation }) => {
           🎯 Start Game with this Pair
         </Text>
       </TouchableOpacity>
+
+      <PaywallModal
+        visible={showPaywall}
+        onClose={() => setShowPaywall(false)}
+        onSubscribe={handleSubscriptionSuccess}
+      />
+
+      <DeveloperSettings
+        visible={showDeveloperSettings}
+        onClose={() => setShowDeveloperSettings(false)}
+        onSubscriptionChanged={loadSubscriptionInfo}
+      />
     </ScrollView>
   );
 };
@@ -228,10 +308,30 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingBottom: 40,
   },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
+    marginBottom: 20,
+    position: 'relative',
+  },
   title: {
     fontSize: 28,
     fontWeight: 'bold',
-    marginBottom: 20,
+  },
+  devButton: {
+    position: 'absolute',
+    right: 0,
+    backgroundColor: '#f0f0f0',
+    borderRadius: 20,
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  devButtonText: {
+    fontSize: 20,
   },
   shuffleButton: {
     backgroundColor: '#FF6B6B',
