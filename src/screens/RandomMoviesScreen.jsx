@@ -248,7 +248,7 @@ const RandomMoviesScreen = ({ navigation }) => {
             <Text style={styles.logoText}>CineMaze</Text>
             <View style={styles.logoAccent} />
           </View>
-          <Text style={styles.tagline}>Discover Movies Through Play</Text>
+          <Text style={styles.tagline}>Discover Movies and Actors Through Play</Text>
         </View>
         <View style={styles.headerButtons}>
           <TouchableOpacity style={styles.headerButton} onPress={() => setShowPlayerStats(true)}>
@@ -274,10 +274,6 @@ const RandomMoviesScreen = ({ navigation }) => {
       <MoviesContainer movies={movies} onAddToWatchlist={addToWatchlist} isLoading={loading} />
 
       <View style={styles.buttonContainer}>
-        <TouchableOpacity style={styles.shuffleButton} onPress={fetchTwoMovies}>
-          <Text style={styles.shuffleButtonText}>🎲 Shuffle</Text>
-        </TouchableOpacity>
-
         <TouchableOpacity
           style={[styles.startGameButton, movies.length !== 2 && styles.disabledButton]}
           onPress={handleStartGame}
@@ -288,6 +284,10 @@ const RandomMoviesScreen = ({ navigation }) => {
           >
             🎯 Start Game
           </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.shuffleButton} onPress={fetchTwoMovies}>
+          <Text style={styles.shuffleButtonText}>🎲 Shuffle</Text>
         </TouchableOpacity>
       </View>
 

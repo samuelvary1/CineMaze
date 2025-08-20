@@ -8,6 +8,9 @@ import WatchlistScreen from './src/screens/WatchlistScreen';
 import AccountOverviewScreen from './src/screens/AccountOverviewScreen';
 import CompletedConnectionsScreen from './src/screens/CompletedConnectionsScreen';
 import ConnectionPathScreen from './src/screens/ConnectionPathScreen';
+import FavoriteActorsScreen from './src/screens/FavoriteActorsScreen';
+import ActorDetailScreen from './src/screens/ActorDetailScreen';
+import MovieDetailScreen from './src/screens/MovieDetailScreen';
 import SubscriptionService from './src/services/SubscriptionService';
 
 const Stack = createNativeStackNavigator();
@@ -58,12 +61,18 @@ export default function App() {
         <Stack.Screen
           name="GameScreen"
           component={GameScreen}
-          options={{ title: 'Movie Connection Game' }}
+          options={{
+            title: 'Movie Connection Game',
+            headerShown: false, // Hide header since we have custom header in component
+          }}
         />
         <Stack.Screen
           name="WatchlistScreen"
           component={WatchlistScreen}
-          options={{ title: 'My Watchlist' }}
+          options={{
+            title: 'My Watchlist',
+            headerShown: false,
+          }}
         />
         <Stack.Screen
           name="CompletedConnectionsScreen"
@@ -78,7 +87,34 @@ export default function App() {
         <Stack.Screen
           name="AccountOverviewScreen"
           component={AccountOverviewScreen}
-          options={{ title: 'Account' }}
+          options={{
+            title: 'Account',
+            headerShown: false, // Hide header since we have custom header in component
+          }}
+        />
+        <Stack.Screen
+          name="FavoriteActorsScreen"
+          component={FavoriteActorsScreen}
+          options={{
+            title: 'Favorite Actors',
+            headerShown: false,
+          }}
+        />
+        <Stack.Screen
+          name="ActorDetailScreen"
+          component={ActorDetailScreen}
+          options={{
+            title: 'Actor Details',
+            headerShown: false,
+          }}
+        />
+        <Stack.Screen
+          name="MovieDetailScreen"
+          component={MovieDetailScreen}
+          options={{
+            title: 'Movie Details',
+            headerShown: false,
+          }}
         />
       </Stack.Navigator>
     </NavigationContainer>

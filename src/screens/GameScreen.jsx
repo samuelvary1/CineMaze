@@ -1,4 +1,4 @@
-import React, { useState, useLayoutEffect, useCallback } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -14,16 +14,13 @@ import { TMDB_API_KEY } from '@env';
 import uuid from 'react-native-uuid';
 import GameStatsService from '../services/GameStatsService';
 import GameRewards from '../components/GameRewards';
+import FavoriteActorsService from '../services/FavoriteActorsService';
+import SubscriptionService, { FEATURES } from '../services/SubscriptionService';
+import PaywallModal from '../components/PaywallModal';
 
 const IMAGE_BASE = 'https://image.tmdb.org/t/p/w500';
 const PLACEHOLDER = 'https://via.placeholder.com/150x225?text=No+Image';
-
-// Header right button component
-const HeaderRightButton = ({ onPress, style, textStyle }) => (
-  <TouchableOpacity onPress={onPress} style={style}>
-    <Text style={textStyle}>👤</Text>
-  </TouchableOpacity>
-);
+const PLACEHOLDER_IMAGE = 'https://via.placeholder.com/150x225?text=No+Image';
 
 const GameScreen = ({ route, navigation }) => {
   const { movieA, movieB } = route.params;
@@ -37,24 +34,32 @@ const GameScreen = ({ route, navigation }) => {
   const [isConnected, setIsConnected] = useState(false);
   const [showRewards, setShowRewards] = useState(false);
   const [gameRewards, setGameRewards] = useState(null);
+  const [showPaywall, setShowPaywall] = useState(false);
 
-  // Header right component callback
-  const renderHeaderRight = useCallback(
-    () => (
-      <HeaderRightButton
-        onPress={() => navigation.navigate('AccountOverviewScreen')}
-        style={styles.headerRightButton}
-        textStyle={styles.headerRightText}
-      />
-    ),
-    [navigation],
-  );
+  const addActorToFavorites = async (actor) => {
+    try {
+      // Check if user has premium access
+      const hasPremium = await SubscriptionService.hasFeature(FEATURES.UNLIMITED_PLAYS);
+      if (!hasPremium) {
+        setShowPaywall(true);
+        return;
+      }
 
-  useLayoutEffect(() => {
-    navigation.setOptions({
-      headerRight: renderHeaderRight,
-    });
-  }, [navigation, renderHeaderRight]);
+      await FavoriteActorsService.addFavoriteActor({
+        id: actor.id,
+        name: actor.name,
+        profilePath: actor.profilePath ? IMAGE_BASE + actor.profilePath : PLACEHOLDER_IMAGE,
+      });
+    } catch (error) {
+      console.error('Error adding actor to favorites:', error);
+      Alert.alert('Error', 'Failed to add actor to favorites.');
+    }
+  };
+
+  const handleSubscriptionSuccess = async () => {
+    setShowPaywall(false);
+    Alert.alert('🎉 Welcome to Premium!', 'You can now add actors to favorites!');
+  };
 
   const addToWatchlist = async (movie) => {
     try {
@@ -255,19 +260,26 @@ const GameScreen = ({ route, navigation }) => {
       const { title, posterPath, actors } = node.data;
       return (
         <View key={node.data.id} style={styles.nodeCard}>
-          <Image source={{ uri: posterPath }} style={styles.poster} />
-          <TouchableOpacity onPress={() => addToWatchlist(node.data)}>
-            <Text style={styles.watchlistButton}>+ Add to Watchlist</Text>
+          <TouchableOpacity onPress={() => addToWatchlist(node.data)} activeOpacity={0.8}>
+            <Image source={{ uri: posterPath }} style={styles.poster} />
           </TouchableOpacity>
           <Text style={styles.nodeTitle}>{title}</Text>
           <Text style={styles.subTitle}>Top Actors:</Text>
           {actors.map((actor, index) => (
-            <TouchableOpacity
-              key={`${side}-actor-${actor.id}-${index}`}
-              onPress={() => handleActorPress(actor, side)}
-            >
-              <Text style={styles.linkText}>{actor.name}</Text>
-            </TouchableOpacity>
+            <View key={`${side}-actor-${actor.id}-${index}`} style={styles.actorItem}>
+              <TouchableOpacity
+                onPress={() => handleActorPress(actor, side)}
+                style={styles.clickableItem}
+              >
+                <Text style={styles.linkText}>{actor.name}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => addActorToFavorites(actor)}
+                style={styles.favoriteActorButton}
+              >
+                <Text style={styles.favoriteActorButtonText}>⭐</Text>
+              </TouchableOpacity>
+            </View>
           ))}
         </View>
       );
@@ -285,6 +297,7 @@ const GameScreen = ({ route, navigation }) => {
               <TouchableOpacity
                 key={`${side}-movie-${movie.id}-${index}`}
                 onPress={() => handleMoviePress(movie, side)}
+                style={styles.clickableItem}
               >
                 <Text style={styles.linkText}>
                   {movie.title} ({movie.release_date.slice(0, 4)})
@@ -301,11 +314,27 @@ const GameScreen = ({ route, navigation }) => {
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
+      <View style={styles.header}>
+        <View style={styles.logoContainer}>
+          <View style={styles.logoTextContainer}>
+            <Text style={styles.logoText}>CineMaze</Text>
+            <View style={styles.logoAccent} />
+          </View>
+          <Text style={styles.tagline}>Discover Movies and Actors Through Play</Text>
+        </View>
+        <TouchableOpacity
+          style={styles.headerButton}
+          onPress={() => navigation.navigate('AccountOverviewScreen')}
+        >
+          <Text style={styles.headerButtonText}>👤</Text>
+        </TouchableOpacity>
+      </View>
+
       <Text style={styles.title}>
         🎯 Connect {movieA.title} ↔ {movieB.title}
       </Text>
       <Text style={styles.moves}>Moves: {moves}</Text>
-      {isConnected && <Text style={styles.win}>✅ You’ve connected the movies!</Text>}
+      {isConnected && <Text style={styles.win}>✅ You've connected the movies!</Text>}
 
       {loading && <ActivityIndicator size="large" style={styles.loadingIndicator} />}
 
@@ -319,96 +348,209 @@ const GameScreen = ({ route, navigation }) => {
         onClose={() => setShowRewards(false)}
         rewards={gameRewards}
       />
+
+      <PaywallModal
+        visible={showPaywall}
+        onClose={() => setShowPaywall(false)}
+        onSubscribe={handleSubscriptionSuccess}
+      />
     </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    padding: 20,
+    padding: 16,
+    paddingTop: 60, // Add top padding to avoid status bar overlap
     alignItems: 'center',
-    paddingBottom: 40,
+    paddingBottom: 30,
+    backgroundColor: '#B8DDF0', // Powder blue background
+    minHeight: '100%',
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    width: '100%',
+    marginBottom: 16,
+    paddingHorizontal: 4,
+  },
+  logoContainer: {
+    alignItems: 'flex-start',
+    flex: 1,
+  },
+  logoTextContainer: {
+    position: 'relative',
+    marginBottom: 4,
+  },
+  logoText: {
+    fontSize: 28,
+    fontWeight: '800',
+    color: '#2C3E50',
+    textShadowColor: 'rgba(255, 255, 255, 0.8)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
+    letterSpacing: -0.5,
+  },
+  logoAccent: {
+    position: 'absolute',
+    bottom: -2,
+    left: 0,
+    right: 0,
+    height: 3,
+    backgroundColor: '#4ECDC4',
+    borderRadius: 2,
+    shadowColor: '#4ECDC4',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.3,
+    shadowRadius: 2,
+  },
+  tagline: {
+    fontSize: 14,
+    color: '#34495E',
+    fontWeight: '500',
+    fontStyle: 'italic',
+    letterSpacing: 0.3,
+    opacity: 0.8,
+  },
+  headerButton: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#2C3E50',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 3,
+    borderWidth: 0.5,
+    borderColor: 'rgba(44, 62, 80, 0.1)',
+  },
+  headerButtonText: {
+    fontSize: 20,
   },
   title: {
-    fontSize: 22,
+    fontSize: 20,
     fontWeight: 'bold',
-    marginBottom: 10,
+    marginBottom: 8,
     textAlign: 'center',
+    color: '#2C3E50',
+    textShadowColor: 'rgba(255, 255, 255, 0.8)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
   },
   moves: {
     fontSize: 16,
-    marginBottom: 10,
+    marginBottom: 8,
+    color: '#34495E',
+    fontWeight: '600',
   },
   win: {
     fontSize: 16,
-    color: 'green',
+    color: '#27AE60',
     fontWeight: 'bold',
-    marginBottom: 10,
-  },
-  watchlistNavButton: {
-    backgroundColor: '#007BFF',
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 20,
-    marginBottom: 20,
-  },
-  watchlistNavButtonText: {
-    color: '#fff',
-    fontWeight: 'bold',
-    fontSize: 16,
+    marginBottom: 8,
+    textShadowColor: 'rgba(255, 255, 255, 0.8)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
   },
   nodeRow: {
     flexDirection: 'row',
     justifyContent: 'space-around',
     width: '100%',
     flexWrap: 'wrap',
-    gap: 20,
+    gap: 16,
   },
   nodeCard: {
-    width: 160,
+    width: 150,
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 16,
   },
   poster: {
-    width: 150,
-    height: 225,
-    borderRadius: 10,
+    width: 140,
+    height: 210,
+    borderRadius: 12,
     backgroundColor: '#ccc',
+    // Raised edge effects
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 8,
+    // Border effect for raised appearance
+    borderWidth: 2,
+    borderTopColor: '#FFFFFF',
+    borderLeftColor: '#FFFFFF',
+    borderRightColor: '#CCCCCC',
+    borderBottomColor: '#CCCCCC',
   },
   nodeTitle: {
-    marginTop: 10,
-    fontSize: 16,
+    marginTop: 8,
+    fontSize: 15,
     fontWeight: '600',
     textAlign: 'center',
+    color: '#2C3E50',
   },
   subTitle: {
-    marginTop: 10,
+    marginTop: 6,
     fontWeight: 'bold',
-    fontSize: 14,
+    fontSize: 13,
+    color: '#34495E',
   },
   linkText: {
-    color: '#007BFF',
-    marginTop: 4,
-    fontSize: 14,
+    color: '#3498DB',
+    marginTop: 2,
+    fontSize: 13,
     textAlign: 'center',
+    fontWeight: '500',
   },
-  watchlistButton: {
-    color: 'green',
-    fontSize: 14,
-    fontWeight: 'bold',
-    marginTop: 8,
+  clickableItem: {
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    borderRadius: 6,
+    marginVertical: 1,
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+    minHeight: 28,
+    justifyContent: 'center',
+    flex: 1,
   },
   loadingIndicator: {
-    marginVertical: 20,
-  },
-  headerRightButton: {
-    marginRight: 15,
-  },
-  headerRightText: {
-    fontSize: 18,
+    marginVertical: 16,
   },
   actorScrollView: {
-    maxHeight: 225,
+    maxHeight: 300, // Increased from 200 to show more movies
+    width: '100%',
+  },
+  actorItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginVertical: 1,
+  },
+  favoriteActorButton: {
+    paddingVertical: 2,
+    paddingHorizontal: 6,
+    backgroundColor: '#FF6B6B',
+    borderRadius: 6,
+    borderWidth: 1,
+    borderTopColor: '#FF9999',
+    borderLeftColor: '#FF9999',
+    borderRightColor: '#CC5555',
+    borderBottomColor: '#CC5555',
+    marginLeft: 8,
+  },
+  favoriteActorButtonText: {
+    color: '#FFFFFF',
+    fontSize: 10,
+    fontWeight: 'bold',
   },
 });
 
