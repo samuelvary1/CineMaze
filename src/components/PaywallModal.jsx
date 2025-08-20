@@ -32,10 +32,14 @@ const PaywallModal = ({ visible, onClose, onSubscribe, playsRemaining }) => {
             [{ text: 'Great!', onPress: onSubscribe }],
           );
         }
+      } else if (result.cancelled) {
+        // User cancelled, don't show error message
+        console.log('Purchase cancelled by user');
       } else {
         Alert.alert('Purchase Failed', result.error || 'Please try again later.');
       }
     } catch (error) {
+      console.error('Purchase error:', error);
       Alert.alert('Error', 'Something went wrong. Please try again.');
     } finally {
       setLoading(false);

@@ -58,6 +58,13 @@ class SubscriptionService {
       // Set up purchase listeners
       this.purchaseUpdateSubscription = purchaseUpdatedListener(async (purchase) => {
         console.log('Purchase updated:', purchase);
+
+        // Ensure purchase object is valid
+        if (!purchase || typeof purchase !== 'object') {
+          console.error('Invalid purchase object received');
+          return;
+        }
+
         const receipt = purchase.transactionReceipt;
 
         if (receipt) {
@@ -78,7 +85,11 @@ class SubscriptionService {
         }
 
         // Acknowledge the purchase
-        await finishTransaction(purchase);
+        try {
+          await finishTransaction(purchase);
+        } catch (error) {
+          console.error('Error finishing transaction:', error);
+        }
       });
 
       this.purchaseErrorSubscription = purchaseErrorListener((error) => {
@@ -167,17 +178,20 @@ class SubscriptionService {
       if (this.initialized) {
         const purchases = await getAvailablePurchases();
 
-        for (const purchase of purchases) {
-          if (purchase.productId === SUBSCRIPTION_SKUS.MONTHLY) {
-            const isValid = await this.validateReceipt(purchase.transactionReceipt, purchase);
-            if (isValid) {
-              // Check if subscription is still active
-              const expiryDate = new Date(purchase.transactionDate);
-              expiryDate.setMonth(expiryDate.getMonth() + 1);
+        // Ensure purchases is an array before iterating
+        if (purchases && Array.isArray(purchases)) {
+          for (const purchase of purchases) {
+            if (purchase && purchase.productId === SUBSCRIPTION_SKUS.MONTHLY) {
+              const isValid = await this.validateReceipt(purchase.transactionReceipt, purchase);
+              if (isValid) {
+                // Check if subscription is still active
+                const expiryDate = new Date(purchase.transactionDate);
+                expiryDate.setMonth(expiryDate.getMonth() + 1);
 
-              if (new Date() < expiryDate) {
-                await this.setSubscriptionTier(SUBSCRIPTION_TIERS.PREMIUM, expiryDate);
-                return { success: true, restored: true };
+                if (new Date() < expiryDate) {
+                  await this.setSubscriptionTier(SUBSCRIPTION_TIERS.PREMIUM, expiryDate);
+                  return { success: true, restored: true };
+                }
               }
             }
           }
@@ -200,7 +214,8 @@ class SubscriptionService {
 
       if (this.initialized) {
         // Request subscription from app store
-        await requestSubscription(SUBSCRIPTION_SKUS.MONTHLY);
+        const result = await requestSubscription(SUBSCRIPTION_SKUS.MONTHLY);
+        console.log('Purchase request result:', result);
         // Note: The actual purchase completion is handled by the purchase listener
         return { success: true, processing: true };
       } else {
@@ -213,7 +228,13 @@ class SubscriptionService {
       }
     } catch (error) {
       console.error('Error purchasing subscription:', error);
-      return { success: false, error: error.message };
+
+      // Check if it's a user cancellation or actual error
+      if (error.code === 'E_USER_CANCELLED') {
+        return { success: false, cancelled: true };
+      }
+
+      return { success: false, error: error.message || 'Unknown error occurred' };
     }
   }
 
