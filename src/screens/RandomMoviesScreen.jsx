@@ -271,25 +271,27 @@ const RandomMoviesScreen = ({ navigation }) => {
         </View>
       </View>
 
-      <SubscriptionStatus />
+      <SubscriptionStatus onUpgrade={() => setShowPaywall(true)} />
 
       <MoviesContainer movies={movies} onAddToWatchlist={addToWatchlist} isLoading={loading} />
 
-      <TouchableOpacity style={styles.shuffleButton} onPress={fetchTwoMovies}>
-        <Text style={styles.shuffleButtonText}>🎲 Shuffle Movies</Text>
-      </TouchableOpacity>
+      <View style={styles.buttonContainer}>
+        <TouchableOpacity style={styles.shuffleButton} onPress={fetchTwoMovies}>
+          <Text style={styles.shuffleButtonText}>🎲 Shuffle</Text>
+        </TouchableOpacity>
 
-      <TouchableOpacity
-        style={[styles.startGameButton, movies.length !== 2 && styles.disabledButton]}
-        onPress={handleStartGame}
-        disabled={movies.length !== 2}
-      >
-        <Text
-          style={[styles.startGameButtonText, movies.length !== 2 && styles.disabledButtonText]}
+        <TouchableOpacity
+          style={[styles.startGameButton, movies.length !== 2 && styles.disabledButton]}
+          onPress={handleStartGame}
+          disabled={movies.length !== 2}
         >
-          🎯 Start Game with this Pair
-        </Text>
-      </TouchableOpacity>
+          <Text
+            style={[styles.startGameButtonText, movies.length !== 2 && styles.disabledButtonText]}
+          >
+            🎯 Start Game
+          </Text>
+        </TouchableOpacity>
+      </View>
 
       <PaywallModal
         visible={showPaywall}
@@ -359,27 +361,34 @@ const styles = StyleSheet.create({
   headerButtonText: {
     fontSize: 20,
   },
+  buttonContainer: {
+    flexDirection: 'row',
+    width: '100%',
+    gap: 12,
+    marginTop: 16,
+    marginBottom: 8,
+  },
   shuffleButton: {
     backgroundColor: '#FF6B6B',
-    paddingVertical: 18,
-    paddingHorizontal: 32,
-    borderRadius: 16,
-    marginBottom: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+    flex: 1,
     shadowColor: '#FF6B6B',
     shadowOffset: {
       width: 0,
-      height: 6,
+      height: 4,
     },
-    shadowOpacity: 0.3,
-    shadowRadius: 10,
-    elevation: 8,
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
+    elevation: 6,
     borderWidth: 0.5,
     borderColor: 'rgba(255, 255, 255, 0.3)',
   },
   shuffleButtonText: {
     color: '#fff',
     fontWeight: 'bold',
-    fontSize: 18,
+    fontSize: 16,
     textAlign: 'center',
     textShadowColor: 'rgba(0, 0, 0, 0.2)',
     textShadowOffset: { width: 0, height: 1 },
@@ -387,25 +396,25 @@ const styles = StyleSheet.create({
   },
   startGameButton: {
     backgroundColor: '#4ECDC4',
-    paddingVertical: 18,
-    paddingHorizontal: 32,
-    borderRadius: 16,
-    marginTop: 8,
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+    flex: 1,
     shadowColor: '#4ECDC4',
     shadowOffset: {
       width: 0,
-      height: 6,
+      height: 4,
     },
-    shadowOpacity: 0.3,
-    shadowRadius: 10,
-    elevation: 8,
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
+    elevation: 6,
     borderWidth: 0.5,
     borderColor: 'rgba(255, 255, 255, 0.3)',
   },
   startGameButtonText: {
     color: '#fff',
     fontWeight: 'bold',
-    fontSize: 18,
+    fontSize: 16,
     textAlign: 'center',
     textShadowColor: 'rgba(0, 0, 0, 0.2)',
     textShadowOffset: { width: 0, height: 1 },

@@ -34,8 +34,8 @@ const SubscriptionStatus = ({ onUpgrade }) => {
 
   if (loading || !subscriptionInfo) {
     return (
-      <View style={styles.container}>
-        <Text style={styles.loadingText}>Loading subscription info...</Text>
+      <View style={styles.statusBar}>
+        <Text style={styles.statusText}>Loading...</Text>
       </View>
     );
   }
@@ -44,121 +44,99 @@ const SubscriptionStatus = ({ onUpgrade }) => {
     subscriptionInfo.tier === SUBSCRIPTION_TIERS.PREMIUM && subscriptionInfo.isActive;
 
   return (
-    <View style={styles.container}>
-      <View style={[styles.statusCard, isPremium ? styles.premiumCard : styles.freeCard]}>
-        <View style={styles.header}>
-          <Text style={styles.tier}>{isPremium ? '✨ Premium' : '🆓 Free'}</Text>
-          {isPremium && (
-            <Text style={styles.expiry}>
-              Expires: {formatExpiryDate(subscriptionInfo.expiryDate)}
-            </Text>
-          )}
-        </View>
-
-        <View style={styles.features}>
-          <View style={styles.featureRow}>
-            <Text style={styles.featureLabel}>Daily Plays:</Text>
-            <Text style={[styles.featureValue, isPremium ? styles.unlimited : styles.limited]}>
-              {subscriptionInfo.playsRemaining}
-            </Text>
-          </View>
-
-          <View style={styles.featureRow}>
-            <Text style={styles.featureLabel}>Watchlist:</Text>
-            <Text
-              style={[
-                styles.featureValue,
-                subscriptionInfo.hasWatchlist ? styles.enabled : styles.disabled,
-              ]}
-            >
-              {subscriptionInfo.hasWatchlist ? 'Enabled' : 'Disabled'}
-            </Text>
-          </View>
-        </View>
-
-        {!isPremium && (
-          <TouchableOpacity style={styles.upgradeButton} onPress={onUpgrade}>
-            <Text style={styles.upgradeButtonText}>Upgrade to Premium - $0.99/month</Text>
-          </TouchableOpacity>
+    <View style={[styles.statusBar, isPremium ? styles.premiumBar : styles.freeBar]}>
+      <View style={styles.statusContent}>
+        <Text style={styles.tierText}>{isPremium ? '✨ Premium' : '🆓 Free'}</Text>
+        <Text style={styles.playsText}>
+          {isPremium ? 'Unlimited plays' : `${subscriptionInfo.playsRemaining} plays remaining`}
+        </Text>
+        {isPremium && subscriptionInfo.expiryDate && (
+          <Text style={styles.expiryText}>
+            Until {formatExpiryDate(subscriptionInfo.expiryDate)}
+          </Text>
         )}
       </View>
+      {!isPremium && onUpgrade && (
+        <TouchableOpacity style={styles.upgradeButton} onPress={onUpgrade}>
+          <Text style={styles.upgradeButtonText}>Upgrade</Text>
+        </TouchableOpacity>
+      )}
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    padding: 20,
+  statusBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    marginHorizontal: 20,
+    marginBottom: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
-  loadingText: {
-    textAlign: 'center',
-    fontSize: 16,
-    color: '#666',
-  },
-  statusCard: {
-    borderRadius: 15,
-    padding: 20,
-    borderWidth: 2,
-  },
-  freeCard: {
+  freeBar: {
     backgroundColor: '#f8f9fa',
     borderColor: '#dee2e6',
   },
-  premiumCard: {
+  premiumBar: {
     backgroundColor: '#fff8e1',
     borderColor: '#4ECDC4',
   },
-  header: {
-    marginBottom: 15,
-  },
-  tier: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 5,
-  },
-  expiry: {
-    fontSize: 14,
-    color: '#666',
-  },
-  features: {
-    marginBottom: 15,
-  },
-  featureRow: {
+  statusContent: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8,
+    flex: 1,
   },
-  featureLabel: {
-    fontSize: 16,
-    color: '#333',
-  },
-  featureValue: {
-    fontSize: 16,
+  tierText: {
+    fontSize: 14,
     fontWeight: 'bold',
+    marginRight: 12,
+    color: '#2c3e50',
   },
-  unlimited: {
-    color: '#4ECDC4',
-  },
-  limited: {
-    color: '#FF6B6B',
-  },
-  enabled: {
-    color: '#28a745',
-  },
-  disabled: {
+  playsText: {
+    fontSize: 13,
     color: '#6c757d',
+    marginRight: 8,
+  },
+  expiryText: {
+    fontSize: 11,
+    color: '#6c757d',
+    fontStyle: 'italic',
+  },
+  statusText: {
+    fontSize: 13,
+    color: '#6c757d',
+    textAlign: 'center',
+    flex: 1,
   },
   upgradeButton: {
     backgroundColor: '#4ECDC4',
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderRadius: 20,
-    alignItems: 'center',
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    shadowColor: '#4ECDC4',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 3,
   },
   upgradeButtonText: {
     color: '#fff',
-    fontSize: 16,
+    fontSize: 12,
     fontWeight: 'bold',
   },
 });
