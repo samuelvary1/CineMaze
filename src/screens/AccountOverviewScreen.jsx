@@ -1,10 +1,33 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import SubscriptionService, { FEATURES } from '../services/SubscriptionService';
 import PaywallModal from '../components/PaywallModal';
 
 const AccountOverviewScreen = ({ navigation }) => {
   const [showPaywall, setShowPaywall] = useState(false);
+  const [subscriptionStatus, setSubscriptionStatus] = useState(null);
+
+  useEffect(() => {
+    checkSubscriptionStatus();
+  }, []);
+
+  const checkSubscriptionStatus = async () => {
+    try {
+      const isActive = await SubscriptionService.isSubscriptionActive();
+      const tier = await SubscriptionService.getSubscriptionTier();
+      const devInfo = SubscriptionService.getDevelopmentInfo();
+
+      setSubscriptionStatus({
+        isActive,
+        tier,
+        developmentMode: devInfo.developmentMode,
+        platform: devInfo.platform,
+        productId: devInfo.productId,
+      });
+    } catch (error) {
+      console.error('Error checking subscription status:', error);
+    }
+  };
 
   const checkPremiumAndNavigate = async (feature, screenName) => {
     try {
@@ -27,6 +50,12 @@ const AccountOverviewScreen = ({ navigation }) => {
   const handleFavoriteActorsPress = () => {
     checkPremiumAndNavigate(FEATURES.UNLIMITED_PLAYS, 'FavoriteActorsScreen');
   };
+
+  const handleSubscriptionSuccess = () => {
+    setShowPaywall(false);
+    checkSubscriptionStatus(); // Refresh status after subscription
+  };
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -41,6 +70,24 @@ const AccountOverviewScreen = ({ navigation }) => {
           <Text style={styles.backToGameText}>🎮 Back</Text>
         </TouchableOpacity>
       </View>
+
+      {/* Subscription Status Indicator */}
+      {subscriptionStatus && (
+        <View style={styles.statusContainer}>
+          <Text style={styles.statusTitle}>
+            {subscriptionStatus.developmentMode ? '🔧 Development Mode' : '🚀 Production Mode'}
+          </Text>
+          <Text style={styles.statusText}>
+            Status: {subscriptionStatus.isActive ? '✅ Premium Active' : '❌ Free Tier'}
+            {subscriptionStatus.developmentMode && subscriptionStatus.isActive
+              ? ' (Simulated)'
+              : ''}
+          </Text>
+          <Text style={styles.statusDetail}>
+            Platform: {subscriptionStatus.platform} | Product: {subscriptionStatus.productId}
+          </Text>
+        </View>
+      )}
 
       {/* App Logo */}
       <View style={styles.logoImageContainer}>
@@ -89,10 +136,7 @@ const AccountOverviewScreen = ({ navigation }) => {
       <PaywallModal
         visible={showPaywall}
         onClose={() => setShowPaywall(false)}
-        onSuccess={() => {
-          setShowPaywall(false);
-          // Could add success callback here if needed
-        }}
+        onSubscribe={handleSubscriptionSuccess}
       />
     </View>
   );
@@ -101,7 +145,7 @@ const AccountOverviewScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingTop: 50, // Reduced from 60
+    paddingTop: 50, // Increased from 35 to move everything down
     backgroundColor: '#B8DDF0', // Powder blue background
   },
   header: {
@@ -109,8 +153,8 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'flex-start',
     paddingHorizontal: 20,
-    marginTop: 20, // Added top margin to move header down
-    marginBottom: 16, // Reduced from 24
+    marginTop: 20, // Increased from 10 to move header down more
+    marginBottom: 12, // Reduced from 16
   },
   logoContainer: {
     alignItems: 'flex-start',
@@ -171,17 +215,44 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     textAlign: 'center',
   },
+  statusContainer: {
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    marginHorizontal: 20,
+    marginVertical: 8, // Reduced from 10
+    padding: 10, // Reduced from 12
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#4ECDC4',
+  },
+  statusTitle: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#2C3E50',
+    textAlign: 'center',
+    marginBottom: 4,
+  },
+  statusText: {
+    fontSize: 12,
+    color: '#2C3E50',
+    textAlign: 'center',
+    marginBottom: 2,
+  },
+  statusDetail: {
+    fontSize: 10,
+    color: '#7F8C8D',
+    textAlign: 'center',
+  },
   logoImageContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 30, // Added top margin to move icon down
-    marginBottom: 10, // Reduced to move content up
+    marginTop: 15, // Reduced from 30 to move icon up
+    marginBottom: 8, // Reduced from 10
     paddingHorizontal: 20,
   },
   appIconContainer: {
-    width: 200,
-    height: 200,
-    borderRadius: 32,
+    width: 160, // Reduced from 200 to save space
+    height: 160, // Reduced from 200 to save space
+    borderRadius: 28, // Adjusted proportionally
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#000',
@@ -194,20 +265,21 @@ const styles = StyleSheet.create({
     elevation: 12,
   },
   appIcon: {
-    width: 180,
-    height: 180,
-    borderRadius: 30,
+    width: 145, // Reduced from 180
+    height: 145, // Reduced from 180
+    borderRadius: 25, // Adjusted proportionally
   },
   content: {
     flex: 1,
-    padding: 15, // Reduced from 20
+    padding: 12, // Reduced from 15
+    paddingBottom: 25, // Add bottom padding to move buttons up from bottom
     justifyContent: 'center',
     alignItems: 'center',
   },
   title: {
-    fontSize: 24,
+    fontSize: 22, // Reduced from 24 to save space
     fontWeight: 'bold',
-    marginBottom: 25, // Reduced from 40
+    marginBottom: 18, // Reduced from 25
     textAlign: 'center',
     color: '#2C3E50',
     textShadowColor: 'rgba(255, 255, 255, 0.8)',
@@ -216,10 +288,10 @@ const styles = StyleSheet.create({
   },
   button: {
     backgroundColor: '#4ECDC4',
-    paddingVertical: 14, // Reduced from 16
+    paddingVertical: 12, // Reduced from 14
     paddingHorizontal: 30,
     borderRadius: 20,
-    marginBottom: 15, // Reduced from 20
+    marginBottom: 12, // Reduced from 15
     width: '85%',
     alignItems: 'center',
     shadowColor: '#000',

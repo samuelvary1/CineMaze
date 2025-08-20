@@ -25,6 +25,12 @@ const PaywallModal = ({ visible, onClose, onSubscribe, playsRemaining }) => {
             'Your purchase is being processed. This may take a moment.',
             [{ text: 'OK' }],
           );
+        } else if (result.simulated) {
+          Alert.alert(
+            '🎉 Welcome to Premium!',
+            'You now have unlimited plays and access to the watchlist feature! (Simulated)',
+            [{ text: 'Great!', onPress: onSubscribe }],
+          );
         } else {
           Alert.alert(
             '🎉 Welcome to Premium!',

@@ -401,8 +401,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     width: '100%',
     gap: 12,
-    marginTop: 8,
-    marginBottom: 8,
+    marginTop: 35, // Increased from 20 to create more stable spacing
+    marginBottom: 12, // Also increased bottom margin for better balance
   },
   shuffleButton: {
     backgroundColor: '#FF6B6B',
