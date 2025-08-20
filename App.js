@@ -78,7 +78,7 @@ export default function App() {
         <Stack.Screen
           name="CompletedConnectionsScreen"
           component={CompletedConnectionsScreen}
-          options={{ title: 'Completed Games' }}
+          options={{ title: '', headerBackTitle: 'Back' }}
         />
         <Stack.Screen
           name="ConnectionPathScreen"

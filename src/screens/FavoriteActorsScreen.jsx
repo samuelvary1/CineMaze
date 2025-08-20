@@ -93,19 +93,11 @@ const FavoriteActorsScreen = ({ navigation }) => {
         <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
           <Text style={styles.backButtonText}>← Back</Text>
         </TouchableOpacity>
-        <View style={styles.logoContainer}>
-          <View style={styles.logoTextContainer}>
-            <Text style={styles.logoText}>CineMaze</Text>
-            <View style={styles.logoAccent} />
-          </View>
-          <Text style={styles.tagline}>Discover Movies and Actors Through Play</Text>
-        </View>
-        <View style={styles.headerSpacer} />
       </View>
 
-      <ScrollView contentContainerStyle={styles.content}>
-        <Text style={styles.title}>⭐ Favorite Actors</Text>
+      <Text style={styles.title}>⭐ Favorite Actors</Text>
 
+      <ScrollView contentContainerStyle={styles.content}>
         {favoriteActors.length === 0 ? (
           <View style={styles.emptyState}>
             <Text style={styles.emptyText}>No favorite actors yet!</Text>

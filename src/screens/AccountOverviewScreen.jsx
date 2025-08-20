@@ -37,6 +37,9 @@ const AccountOverviewScreen = ({ navigation }) => {
           </View>
           <Text style={styles.tagline}>Discover Movies and Actors Through Play</Text>
         </View>
+        <TouchableOpacity style={styles.backToGameButton} onPress={() => navigation.goBack()}>
+          <Text style={styles.backToGameText}>🎮 Back</Text>
+        </TouchableOpacity>
       </View>
 
       {/* App Logo */}
@@ -102,52 +105,77 @@ const styles = StyleSheet.create({
     backgroundColor: '#B8DDF0', // Powder blue background
   },
   header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
     paddingHorizontal: 20,
     marginTop: 20, // Added top margin to move header down
     marginBottom: 16, // Reduced from 24
   },
   logoContainer: {
-    alignItems: 'center',
+    alignItems: 'flex-start',
+    flex: 1,
   },
   logoTextContainer: {
     position: 'relative',
     marginBottom: 4,
   },
   logoText: {
-    fontSize: 32,
-    fontWeight: '800',
+    fontSize: 36,
+    fontWeight: '900',
     color: '#2C3E50',
-    textShadowColor: 'rgba(255, 255, 255, 0.8)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
-    letterSpacing: -0.5,
+    textShadowColor: 'rgba(255, 255, 255, 0.9)',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 3,
+    letterSpacing: -0.8,
   },
   logoAccent: {
     position: 'absolute',
-    bottom: -2,
+    bottom: -3,
     left: 0,
     right: 0,
-    height: 3,
+    height: 4,
     backgroundColor: '#4ECDC4',
-    borderRadius: 2,
+    borderRadius: 3,
     shadowColor: '#4ECDC4',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.3,
-    shadowRadius: 2,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.4,
+    shadowRadius: 3,
   },
   tagline: {
-    fontSize: 16,
-    color: '#34495E',
-    fontWeight: '500',
+    fontSize: 17,
+    color: '#2C3E50',
+    fontWeight: '600',
     fontStyle: 'italic',
-    letterSpacing: 0.3,
-    opacity: 0.8,
+    letterSpacing: 0.5,
+    opacity: 0.9,
+    marginTop: 2,
+  },
+  backToGameButton: {
+    backgroundColor: '#4ECDC4',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 15,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  backToGameText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '600',
+    textAlign: 'center',
   },
   logoImageContainer: {
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 30, // Added top margin to move icon down
-    marginBottom: 20, // Keep bottom margin as before
+    marginBottom: 10, // Reduced to move content up
     paddingHorizontal: 20,
   },
   appIconContainer: {

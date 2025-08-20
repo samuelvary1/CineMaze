@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -35,6 +35,24 @@ const GameScreen = ({ route, navigation }) => {
   const [showRewards, setShowRewards] = useState(false);
   const [gameRewards, setGameRewards] = useState(null);
   const [showPaywall, setShowPaywall] = useState(false);
+  const [favoriteActors, setFavoriteActors] = useState(new Set());
+
+  useEffect(() => {
+    loadFavoriteActors();
+  }, []);
+
+  const loadFavoriteActors = async () => {
+    try {
+      const favoriteActorsData = await AsyncStorage.getItem('favoriteActors');
+      if (favoriteActorsData) {
+        const actors = JSON.parse(favoriteActorsData);
+        const actorIds = new Set(actors.map((actor) => actor.id));
+        setFavoriteActors(actorIds);
+      }
+    } catch (error) {
+      console.error('Error loading favorite actors:', error);
+    }
+  };
 
   const addActorToFavorites = async (actor) => {
     try {
@@ -50,6 +68,9 @@ const GameScreen = ({ route, navigation }) => {
         name: actor.name,
         profilePath: actor.profilePath ? IMAGE_BASE + actor.profilePath : PLACEHOLDER_IMAGE,
       });
+
+      // Refresh favorite actors list
+      await loadFavoriteActors();
     } catch (error) {
       console.error('Error adding actor to favorites:', error);
       Alert.alert('Error', 'Failed to add actor to favorites.');
@@ -265,22 +286,35 @@ const GameScreen = ({ route, navigation }) => {
           </TouchableOpacity>
           <Text style={styles.nodeTitle}>{title}</Text>
           <Text style={styles.subTitle}>Top Actors:</Text>
-          {actors.map((actor, index) => (
-            <View key={`${side}-actor-${actor.id}-${index}`} style={styles.actorItem}>
-              <TouchableOpacity
-                onPress={() => handleActorPress(actor, side)}
-                style={styles.clickableItem}
-              >
-                <Text style={styles.linkText}>{actor.name}</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={() => addActorToFavorites(actor)}
-                style={styles.favoriteActorButton}
-              >
-                <Text style={styles.favoriteActorButtonText}>⭐</Text>
-              </TouchableOpacity>
-            </View>
-          ))}
+          {actors.map((actor, index) => {
+            const isFavorited = favoriteActors.has(actor.id);
+            return (
+              <View key={`${side}-actor-${actor.id}-${index}`} style={styles.actorItem}>
+                <TouchableOpacity
+                  onPress={() => handleActorPress(actor, side)}
+                  style={styles.clickableItem}
+                >
+                  <Text style={[styles.linkText, isFavorited && styles.favoritedActorText]}>
+                    {isFavorited ? '⭐ ' : ''}
+                    {actor.name}
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() => addActorToFavorites(actor)}
+                  style={[styles.favoriteActorButton, isFavorited && styles.favoritedActorButton]}
+                >
+                  <Text
+                    style={[
+                      styles.favoriteActorButtonText,
+                      isFavorited && styles.favoritedActorButtonText,
+                    ]}
+                  >
+                    {isFavorited ? '★' : '⭐'}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            );
+          })}
         </View>
       );
     }
@@ -551,6 +585,20 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 10,
     fontWeight: 'bold',
+  },
+  favoritedActorText: {
+    color: '#4ECDC4',
+    fontWeight: 'bold',
+  },
+  favoritedActorButton: {
+    backgroundColor: '#4ECDC4',
+    borderTopColor: '#7EDDDD',
+    borderLeftColor: '#7EDDDD',
+    borderRightColor: '#3EBBBB',
+    borderBottomColor: '#3EBBBB',
+  },
+  favoritedActorButtonText: {
+    color: '#FFFFFF',
   },
 });
 

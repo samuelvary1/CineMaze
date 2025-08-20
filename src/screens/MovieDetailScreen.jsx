@@ -308,14 +308,6 @@ const MovieDetailScreen = ({ route, navigation }) => {
         <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
           <Text style={styles.backButtonText}>← Back</Text>
         </TouchableOpacity>
-        <View style={styles.logoContainer}>
-          <View style={styles.logoTextContainer}>
-            <Text style={styles.logoText}>CineMaze</Text>
-            <View style={styles.logoAccent} />
-          </View>
-          <Text style={styles.tagline}>Discover Movies and Actors Through Play</Text>
-        </View>
-        <View style={styles.headerSpacer} />
       </View>
 
       <ScrollView contentContainerStyle={styles.content}>

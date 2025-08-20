@@ -46,17 +46,11 @@ const WatchlistScreen = ({ navigation }) => {
         <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
           <Text style={styles.backButtonText}>← Back</Text>
         </TouchableOpacity>
-        <View style={styles.logoContainer}>
-          <View style={styles.logoTextContainer}>
-            <Text style={styles.logoText}>CineMaze</Text>
-            <View style={styles.logoAccent} />
-          </View>
-          <Text style={styles.tagline}>Discover Movies and Actors Through Play</Text>
-        </View>
       </View>
 
+      <Text style={styles.title}>📽️ Watchlist</Text>
+
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        <Text style={styles.title}>📽️ Your Watchlist</Text>
         {watchlist.length === 0 ? (
           <Text style={styles.empty}>Your watchlist is empty.</Text>
         ) : (
@@ -160,6 +154,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 20,
     color: '#2C3E50',
+    textAlign: 'center',
     textShadowColor: 'rgba(255, 255, 255, 0.8)',
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 2,

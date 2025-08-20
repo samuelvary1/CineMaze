@@ -29,21 +29,22 @@ const CompletedConnectionsScreen = ({ navigation }) => {
         style={styles.card}
         onPress={() =>
           navigation.navigate('ConnectionPathScreen', {
-            path: connection.path,
-            start: connection.start,
-            target: connection.target,
-            timestamp: connection.timestamp,
+            connection,
           })
         }
       >
         <View style={styles.row}>
           <Image
-            source={{ uri: connection.start.posterPath || PLACEHOLDER }}
+            source={{
+              uri: connection.movieA?.posterPath || PLACEHOLDER,
+            }}
             style={styles.poster}
           />
-          <Text style={styles.arrow}>➡️</Text>
+          <Text style={styles.arrow}>→</Text>
           <Image
-            source={{ uri: connection.target.posterPath || PLACEHOLDER }}
+            source={{
+              uri: connection.movieB?.posterPath || PLACEHOLDER,
+            }}
             style={styles.poster}
           />
         </View>
@@ -56,10 +57,10 @@ const CompletedConnectionsScreen = ({ navigation }) => {
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
+    <ScrollView style={styles.scrollView} contentContainerStyle={styles.container}>
       <Text style={styles.title}>📚 Completed Connections</Text>
       {connections.length === 0 ? (
-        <Text style={styles.empty}>You haven’t finished any games yet.</Text>
+        <Text style={styles.empty}>You haven't finished any games yet.</Text>
       ) : (
         connections.map(renderCard)
       )}
@@ -68,27 +69,44 @@ const CompletedConnectionsScreen = ({ navigation }) => {
 };
 
 const styles = StyleSheet.create({
+  scrollView: {
+    flex: 1,
+    backgroundColor: '#B8DDF0', // Powder blue background
+  },
   container: {
     padding: 20,
     alignItems: 'center',
     paddingBottom: 40,
+    minHeight: '100%',
   },
   title: {
     fontSize: 26,
     fontWeight: 'bold',
     marginBottom: 20,
+    color: '#2C3E50',
   },
   empty: {
     fontSize: 16,
     fontStyle: 'italic',
+    color: '#2C3E50',
+    textAlign: 'center',
+    marginTop: 50,
   },
   card: {
     width: '100%',
-    backgroundColor: '#f1f1f1',
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
     borderRadius: 12,
     padding: 15,
     marginBottom: 20,
     alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   row: {
     flexDirection: 'row',
@@ -103,10 +121,12 @@ const styles = StyleSheet.create({
   arrow: {
     fontSize: 24,
     marginHorizontal: 10,
+    color: '#2C3E50',
   },
   pathLength: {
     marginTop: 10,
     fontWeight: 'bold',
+    color: '#2C3E50',
   },
   timestamp: {
     fontSize: 12,
