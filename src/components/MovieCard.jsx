@@ -1,5 +1,5 @@
 import React, { memo } from 'react';
-import { View, Text, Image, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, Image, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 
 const PLACEHOLDER_IMAGE = 'https://via.placeholder.com/150x225?text=No+Image';
 
@@ -10,11 +10,13 @@ const MovieCard = memo(({ movie, onAddToWatchlist }) => {
         <Image source={{ uri: movie.posterPath || PLACEHOLDER_IMAGE }} style={styles.poster} />
       </TouchableOpacity>
       <Text style={styles.movieTitle}>{movie.title}</Text>
-      {movie.actors.map((actor) => (
-        <Text key={actor.id} style={styles.actorName}>
-          {actor.name}
-        </Text>
-      ))}
+      <ScrollView style={styles.actorsList} showsVerticalScrollIndicator={false}>
+        {movie.actors.map((actor) => (
+          <Text key={actor.id} style={styles.actorName}>
+            {actor.name}
+          </Text>
+        ))}
+      </ScrollView>
     </View>
   );
 });
@@ -55,6 +57,10 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     textAlign: 'center',
     color: '#2C3E50',
+  },
+  actorsList: {
+    maxHeight: 150, // Limit height and make scrollable
+    paddingVertical: 4,
   },
   actorName: {
     fontSize: 13, // Slightly smaller

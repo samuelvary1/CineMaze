@@ -7,6 +7,7 @@ import {
   Alert,
   ScrollView,
   ActivityIndicator,
+  Modal,
 } from 'react-native';
 import DailyChallengeService from '../services/DailyChallengeService';
 import MoviesContainer from '../components/MoviesContainer';
@@ -18,6 +19,7 @@ const DailyChallengeScreen = ({ navigation }) => {
   const [leaderboard, setLeaderboard] = useState([]);
   const [userStats, setUserStats] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [showStatsModal, setShowStatsModal] = useState(false);
 
   useEffect(() => {
     loadDailyChallenge();
@@ -110,121 +112,145 @@ const DailyChallengeScreen = ({ navigation }) => {
   }
 
   return (
-    <ScrollView style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-          <Text style={styles.backButtonText}>←</Text>
-        </TouchableOpacity>
-        <Text style={styles.title}>🗓️ Daily Challenge</Text>
-        <View style={styles.placeholder} />
-      </View>
+    <>
+      <ScrollView style={styles.container}>
+        {/* Header */}
+        <View style={styles.header}>
+          <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+            <Text style={styles.backButtonText}>←</Text>
+          </TouchableOpacity>
+          <Text style={styles.title}>🗓️ Daily Challenge</Text>
+          <TouchableOpacity style={styles.statsButton} onPress={() => setShowStatsModal(true)}>
+            <Text style={styles.statsButtonText}>📊</Text>
+          </TouchableOpacity>
+        </View>
 
-      {/* Today's Challenge */}
-      {todaysChallenge && (
-        <View style={styles.challengeSection}>
-          <Text style={styles.sectionTitle}>Today's Challenge</Text>
-          <Text style={styles.challengeDate}>
-            {new Date().toLocaleDateString('en-US', {
-              weekday: 'long',
-              year: 'numeric',
-              month: 'long',
-              day: 'numeric',
-            })}
-          </Text>
+        {/* Today's Challenge */}
+        {todaysChallenge && (
+          <View style={styles.challengeSection}>
+            <Text style={styles.sectionTitle}>Today's Challenge</Text>
+            <Text style={styles.challengeDate}>
+              {new Date().toLocaleDateString('en-US', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+              })}
+            </Text>
 
-          <MoviesContainer
-            movies={[todaysChallenge.movieA, todaysChallenge.movieB]}
-            onAddToWatchlist={() => {}}
-            isLoading={false}
-            isDailyChallenge={true}
-          />
+            <MoviesContainer
+              movies={[todaysChallenge.movieA, todaysChallenge.movieB]}
+              onAddToWatchlist={() => {}}
+              isLoading={false}
+              isDailyChallenge={true}
+            />
 
-          {!isCompleted ? (
-            <TouchableOpacity style={styles.startButton} onPress={handleStartChallenge}>
-              <Text style={styles.startButtonText}>🎯 Start Daily Challenge</Text>
-            </TouchableOpacity>
-          ) : (
-            <View style={styles.completedSection}>
-              <Text style={styles.completedTitle}>✅ Challenge Completed!</Text>
-              {result && (
-                <View style={styles.resultCard}>
-                  <Text style={styles.resultText}>
-                    🎯 Solved in <Text style={styles.highlightText}>{result.moves}</Text> moves
-                  </Text>
-                  <Text style={styles.resultText}>
-                    ⏱️ Time:{' '}
-                    <Text style={styles.highlightText}>{formatTime(result.timeTaken)}</Text>
-                  </Text>
-                  {result.rank && (
+            {!isCompleted ? (
+              <TouchableOpacity style={styles.startButton} onPress={handleStartChallenge}>
+                <Text style={styles.startButtonText}>🎯 Start Daily Challenge</Text>
+              </TouchableOpacity>
+            ) : (
+              <View style={styles.completedSection}>
+                <Text style={styles.completedTitle}>✅ Challenge Completed!</Text>
+                {result && (
+                  <View style={styles.resultCard}>
                     <Text style={styles.resultText}>
-                      🏆 Rank: <Text style={styles.highlightText}>{getOrdinal(result.rank)}</Text>{' '}
-                      place today
+                      🎯 Solved in <Text style={styles.highlightText}>{result.moves}</Text> moves
                     </Text>
-                  )}
+                    <Text style={styles.resultText}>
+                      ⏱️ Time:{' '}
+                      <Text style={styles.highlightText}>{formatTime(result.timeTaken)}</Text>
+                    </Text>
+                    {result.rank && (
+                      <Text style={styles.resultText}>
+                        🏆 Rank: <Text style={styles.highlightText}>{getOrdinal(result.rank)}</Text>{' '}
+                        place today
+                      </Text>
+                    )}
+                  </View>
+                )}
+              </View>
+            )}
+          </View>
+        )}
+
+        {/* Today's Leaderboard */}
+        {isCompleted && leaderboard.length > 0 && (
+          <View style={styles.leaderboardSection}>
+            <Text style={styles.sectionTitle}>🏆 Today's Leaderboard</Text>
+            <View style={styles.leaderboardContainer}>
+              {leaderboard.slice(0, 10).map((entry, index) => (
+                <View key={entry.id} style={styles.leaderboardRow}>
+                  <Text style={styles.rank}>
+                    {index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `${index + 1}.`}
+                  </Text>
+                  <Text style={styles.playerName}>
+                    {entry.id.startsWith('player-') ? `Player ${entry.id.slice(-4)}` : 'Anonymous'}
+                  </Text>
+                  <Text style={styles.moves}>{entry.moves} moves</Text>
+                  <Text style={styles.time}>{formatTime(entry.timeTaken)}</Text>
                 </View>
-              )}
+              ))}
+            </View>
+          </View>
+        )}
+
+        {/* Come Back Tomorrow */}
+        {isCompleted && (
+          <View style={styles.comeBackSection}>
+            <Text style={styles.comeBackTitle}>🌅 Come Back Tomorrow</Text>
+            <Text style={styles.comeBackText}>
+              A new challenge awaits! Keep your streak going and climb the leaderboard.
+            </Text>
+          </View>
+        )}
+      </ScrollView>
+
+      {/* Stats Modal */}
+      <Modal
+        visible={showStatsModal}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setShowStatsModal(false)}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalHeader}>
+            <View style={styles.modalPlaceholder} />
+            <Text style={styles.modalTitle}>📊 Your Stats</Text>
+            <TouchableOpacity
+              style={styles.modalCloseButton}
+              onPress={() => setShowStatsModal(false)}
+            >
+              <Text style={styles.modalCloseText}>✕</Text>
+            </TouchableOpacity>
+          </View>
+
+          {userStats && (
+            <View style={styles.modalContent}>
+              <Text style={styles.modalSectionTitle}>Daily Challenge Stats</Text>
+              <View style={styles.statsGrid}>
+                <View style={styles.statCard}>
+                  <Text style={styles.statNumber}>{userStats.totalCompleted}</Text>
+                  <Text style={styles.statLabel}>Completed</Text>
+                </View>
+                <View style={styles.statCard}>
+                  <Text style={styles.statNumber}>{userStats.currentStreak}</Text>
+                  <Text style={styles.statLabel}>Current Streak</Text>
+                </View>
+                <View style={styles.statCard}>
+                  <Text style={styles.statNumber}>{userStats.bestMoves || '-'}</Text>
+                  <Text style={styles.statLabel}>Best Moves</Text>
+                </View>
+                <View style={styles.statCard}>
+                  <Text style={styles.statNumber}>{userStats.longestStreak}</Text>
+                  <Text style={styles.statLabel}>Longest Streak</Text>
+                </View>
+              </View>
             </View>
           )}
         </View>
-      )}
-
-      {/* User Stats */}
-      {userStats && (
-        <View style={styles.statsSection}>
-          <Text style={styles.sectionTitle}>Your Daily Challenge Stats</Text>
-          <View style={styles.statsGrid}>
-            <View style={styles.statCard}>
-              <Text style={styles.statNumber}>{userStats.totalCompleted}</Text>
-              <Text style={styles.statLabel}>Completed</Text>
-            </View>
-            <View style={styles.statCard}>
-              <Text style={styles.statNumber}>{userStats.currentStreak}</Text>
-              <Text style={styles.statLabel}>Current Streak</Text>
-            </View>
-            <View style={styles.statCard}>
-              <Text style={styles.statNumber}>{userStats.bestMoves || '-'}</Text>
-              <Text style={styles.statLabel}>Best Moves</Text>
-            </View>
-            <View style={styles.statCard}>
-              <Text style={styles.statNumber}>{userStats.longestStreak}</Text>
-              <Text style={styles.statLabel}>Longest Streak</Text>
-            </View>
-          </View>
-        </View>
-      )}
-
-      {/* Today's Leaderboard */}
-      {isCompleted && leaderboard.length > 0 && (
-        <View style={styles.leaderboardSection}>
-          <Text style={styles.sectionTitle}>🏆 Today's Leaderboard</Text>
-          <View style={styles.leaderboardContainer}>
-            {leaderboard.slice(0, 10).map((entry, index) => (
-              <View key={entry.id} style={styles.leaderboardRow}>
-                <Text style={styles.rank}>
-                  {index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `${index + 1}.`}
-                </Text>
-                <Text style={styles.playerName}>
-                  {entry.id.startsWith('player-') ? `Player ${entry.id.slice(-4)}` : 'Anonymous'}
-                </Text>
-                <Text style={styles.moves}>{entry.moves} moves</Text>
-                <Text style={styles.time}>{formatTime(entry.timeTaken)}</Text>
-              </View>
-            ))}
-          </View>
-        </View>
-      )}
-
-      {/* Come Back Tomorrow */}
-      {isCompleted && (
-        <View style={styles.comeBackSection}>
-          <Text style={styles.comeBackTitle}>🌅 Come Back Tomorrow</Text>
-          <Text style={styles.comeBackText}>
-            A new challenge awaits! Keep your streak going and climb the leaderboard.
-          </Text>
-        </View>
-      )}
-    </ScrollView>
+      </Modal>
+    </>
   );
 };
 
@@ -277,6 +303,22 @@ const styles = StyleSheet.create({
   },
   placeholder: {
     width: 40,
+  },
+  statsButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#FFFFFF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#2C3E50',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  statsButtonText: {
+    fontSize: 20,
   },
   challengeSection: {
     margin: 16,
@@ -450,6 +492,62 @@ const styles = StyleSheet.create({
     color: '#7F8C8D',
     textAlign: 'center',
     lineHeight: 24,
+  },
+  modalContainer: {
+    flex: 1,
+    backgroundColor: '#B8DDF0',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingTop: 60,
+    paddingBottom: 20,
+  },
+  modalPlaceholder: {
+    width: 40,
+  },
+  modalTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#2C3E50',
+  },
+  modalCloseButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#FFFFFF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#2C3E50',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  modalCloseText: {
+    fontSize: 18,
+    color: '#2C3E50',
+    fontWeight: 'bold',
+  },
+  modalContent: {
+    margin: 16,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 20,
+    shadowColor: '#2C3E50',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  modalSectionTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#2C3E50',
+    marginBottom: 16,
+    textAlign: 'center',
   },
 });
 
