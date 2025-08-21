@@ -279,13 +279,13 @@ const GameScreen = ({ route, navigation }) => {
   const renderNode = (node, side) => {
     if (node.type === 'movie') {
       const { title, posterPath, actors } = node.data;
+
       return (
-        <View key={node.data.id} style={styles.nodeCard}>
+        <View key={`${side}-movie-${node.data.id}`} style={styles.nodeCard}>
           <TouchableOpacity onPress={() => addToWatchlist(node.data)} activeOpacity={0.8}>
             <Image source={{ uri: posterPath }} style={styles.poster} />
           </TouchableOpacity>
           <Text style={styles.nodeTitle}>{title}</Text>
-          <Text style={styles.subTitle}>Top Actors:</Text>
           {actors.map((actor, index) => {
             const isFavorited = favoriteActors.has(actor.id);
             return (
@@ -322,7 +322,7 @@ const GameScreen = ({ route, navigation }) => {
     if (node.type === 'actor') {
       const { name, profilePath, filmography } = node.data;
       return (
-        <View key={node.data.id} style={styles.nodeCard}>
+        <View key={`${side}-actor-${node.data.id}`} style={styles.nodeCard}>
           <Image source={{ uri: profilePath }} style={styles.poster} />
           <Text style={styles.nodeTitle}>{name}</Text>
           <Text style={styles.subTitle}>Filmography:</Text>
@@ -528,6 +528,7 @@ const styles = StyleSheet.create({
   },
   nodeTitle: {
     marginTop: 8,
+    marginBottom: 8,
     fontSize: 15,
     fontWeight: '600',
     textAlign: 'center',

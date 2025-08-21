@@ -51,6 +51,7 @@ const styles = StyleSheet.create({
   },
   movieTitle: {
     marginTop: 8, // Reduced from 10
+    marginBottom: 4, // Add small spacing before actors list
     fontSize: 15, // Slightly smaller
     fontWeight: '600',
     textAlign: 'center',
