@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Modal, Alert } from 'react-native';
-import GameStatsService, { ACHIEVEMENTS } from '../services/GameStatsService';
+import GameStatsService from '../services/GameStatsService';
 
 const PlayerStats = ({ visible, onClose }) => {
   const [stats, setStats] = useState(null);
-  const [achievements, setAchievements] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -16,13 +15,9 @@ const PlayerStats = ({ visible, onClose }) => {
   const loadStats = async () => {
     try {
       setLoading(true);
-      const [playerStats, earnedAchievements] = await Promise.all([
-        GameStatsService.getPlayerStats(),
-        GameStatsService.getAchievements(),
-      ]);
+      const playerStats = await GameStatsService.getPlayerStats();
 
       setStats(playerStats);
-      setAchievements(earnedAchievements);
     } catch (error) {
       console.error('Error loading stats:', error);
       Alert.alert('Error', 'Failed to load stats');
@@ -36,35 +31,6 @@ const PlayerStats = ({ visible, onClose }) => {
       return 0;
     }
     return (stats.experience / stats.nextLevelExp) * 100;
-  };
-
-  const renderAchievementCard = (achievementId) => {
-    const achievement = ACHIEVEMENTS[achievementId.toUpperCase()];
-    if (!achievement) {
-      return null;
-    }
-
-    return (
-      <View key={achievement.id} style={styles.achievementCard}>
-        <Text style={styles.achievementIcon}>{achievement.icon}</Text>
-        <View style={styles.achievementText}>
-          <Text style={styles.achievementTitle}>{achievement.title}</Text>
-          <Text style={styles.achievementDesc}>{achievement.description}</Text>
-        </View>
-      </View>
-    );
-  };
-
-  const renderLockedAchievement = (achievement) => {
-    return (
-      <View key={achievement.id} style={[styles.achievementCard, styles.lockedCard]}>
-        <Text style={styles.lockedIcon}>🔒</Text>
-        <View style={styles.achievementText}>
-          <Text style={[styles.achievementTitle, styles.lockedText]}>{achievement.title}</Text>
-          <Text style={[styles.achievementDesc, styles.lockedText]}>{achievement.description}</Text>
-        </View>
-      </View>
-    );
   };
 
   if (loading || !stats) {
@@ -144,21 +110,6 @@ const PlayerStats = ({ visible, onClose }) => {
                   <Text style={styles.statLabel}>Best Streak</Text>
                 </View>
               </View>
-            </View>
-
-            {/* Achievements */}
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>
-                🏆 Achievements ({achievements.length}/{Object.keys(ACHIEVEMENTS).length})
-              </Text>
-
-              {/* Earned Achievements */}
-              {achievements.map(renderAchievementCard)}
-
-              {/* Locked Achievements */}
-              {Object.values(ACHIEVEMENTS)
-                .filter((achievement) => !achievements.includes(achievement.id))
-                .map(renderLockedAchievement)}
             </View>
           </ScrollView>
 
@@ -253,44 +204,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#666',
     textAlign: 'center',
-  },
-  achievementCard: {
-    flexDirection: 'row',
-    backgroundColor: '#fff8e1',
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 8,
-    borderWidth: 1,
-    borderColor: '#ffc107',
-  },
-  lockedCard: {
-    backgroundColor: '#f8f9fa',
-    borderColor: '#dee2e6',
-  },
-  achievementIcon: {
-    fontSize: 24,
-    marginRight: 12,
-  },
-  lockedIcon: {
-    fontSize: 24,
-    marginRight: 12,
-    opacity: 0.5,
-  },
-  achievementText: {
-    flex: 1,
-  },
-  achievementTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 2,
-  },
-  achievementDesc: {
-    fontSize: 14,
-    color: '#666',
-  },
-  lockedText: {
-    opacity: 0.5,
   },
   closeButton: {
     backgroundColor: '#007AFF',
