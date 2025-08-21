@@ -4,6 +4,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import RandomMoviesScreen from './src/screens/RandomMoviesScreen';
 import GameScreen from './src/screens/GameScreen';
+import DailyChallengeScreen from './src/screens/DailyChallengeScreen';
 import WatchlistScreen from './src/screens/WatchlistScreen';
 import AccountOverviewScreen from './src/screens/AccountOverviewScreen';
 import CompletedConnectionsScreen from './src/screens/CompletedConnectionsScreen';
@@ -65,6 +66,14 @@ export default function App() {
           options={{
             title: 'Movie Connection Game',
             headerShown: false, // Hide header since we have custom header in component
+          }}
+        />
+        <Stack.Screen
+          name="DailyChallengeScreen"
+          component={DailyChallengeScreen}
+          options={{
+            title: 'Daily Challenge',
+            headerShown: false,
           }}
         />
         <Stack.Screen

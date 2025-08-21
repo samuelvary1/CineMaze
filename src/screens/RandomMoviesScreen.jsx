@@ -16,6 +16,7 @@ import SubscriptionStatus from '../components/SubscriptionStatus';
 import DeveloperSettings from '../components/DeveloperSettings';
 import PlayerStats from '../components/PlayerStats';
 import SubscriptionService, { FEATURES } from '../services/SubscriptionService';
+import DailyChallengeService from '../services/DailyChallengeService';
 
 const BASE_URL = 'https://api.themoviedb.org/3';
 const IMAGE_BASE = 'https://image.tmdb.org/t/p/w500';
@@ -127,10 +128,12 @@ const RandomMoviesScreen = ({ navigation }) => {
   const [showPaywall, setShowPaywall] = useState(false);
   const [showDeveloperSettings, setShowDeveloperSettings] = useState(false);
   const [showPlayerStats, setShowPlayerStats] = useState(false);
+  const [dailyChallengeCompleted, setDailyChallengeCompleted] = useState(false);
 
   // Load subscription info on component mount
   useEffect(() => {
     loadSubscriptionInfo();
+    checkDailyChallengeStatus();
   }, []);
 
   const loadSubscriptionInfo = async () => {
@@ -139,6 +142,15 @@ const RandomMoviesScreen = ({ navigation }) => {
       console.log('Subscription info:', info);
     } catch (error) {
       console.error('Error loading subscription info:', error);
+    }
+  };
+
+  const checkDailyChallengeStatus = async () => {
+    try {
+      const completed = await DailyChallengeService.hasCompletedToday();
+      setDailyChallengeCompleted(completed);
+    } catch (error) {
+      console.error('Error checking daily challenge status:', error);
     }
   };
 
@@ -251,6 +263,13 @@ const RandomMoviesScreen = ({ navigation }) => {
           <Text style={styles.tagline}>Discover Movies and Actors Through Play</Text>
         </View>
         <View style={styles.headerButtons}>
+          <TouchableOpacity
+            style={[styles.headerButton, !dailyChallengeCompleted && styles.newChallengeButton]}
+            onPress={() => navigation.navigate('DailyChallengeScreen')}
+          >
+            <Text style={styles.headerButtonText}>🗓️</Text>
+            {!dailyChallengeCompleted && <View style={styles.notificationDot} />}
+          </TouchableOpacity>
           <TouchableOpacity style={styles.headerButton} onPress={() => setShowPlayerStats(true)}>
             <Text style={styles.headerButtonText}>📊</Text>
           </TouchableOpacity>
@@ -396,6 +415,21 @@ const styles = StyleSheet.create({
     elevation: 3,
     borderWidth: 0.5,
     borderColor: 'rgba(44, 62, 80, 0.1)',
+    position: 'relative',
+  },
+  newChallengeButton: {
+    backgroundColor: '#4ECDC4',
+  },
+  notificationDot: {
+    position: 'absolute',
+    top: 2,
+    right: 2,
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: '#FF6B6B',
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
   },
   headerButtonText: {
     fontSize: 20,

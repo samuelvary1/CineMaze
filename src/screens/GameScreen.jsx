@@ -13,6 +13,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { TMDB_API_KEY } from '@env';
 import uuid from 'react-native-uuid';
 import GameStatsService from '../services/GameStatsService';
+import DailyChallengeService from '../services/DailyChallengeService';
 import GameRewards from '../components/GameRewards';
 import FavoriteActorsService from '../services/FavoriteActorsService';
 import SubscriptionService, { FEATURES } from '../services/SubscriptionService';
@@ -23,7 +24,7 @@ const PLACEHOLDER = 'https://via.placeholder.com/150x225?text=No+Image';
 const PLACEHOLDER_IMAGE = 'https://via.placeholder.com/150x225?text=No+Image';
 
 const GameScreen = ({ route, navigation }) => {
-  const { movieA, movieB } = route.params;
+  const { movieA, movieB, isDaily = false, challengeId } = route.params;
 
   const [leftNode, setLeftNode] = useState({ type: 'movie', data: movieA });
   const [rightNode, setRightNode] = useState({ type: 'movie', data: movieB });
@@ -36,6 +37,7 @@ const GameScreen = ({ route, navigation }) => {
   const [gameRewards, setGameRewards] = useState(null);
   const [showPaywall, setShowPaywall] = useState(false);
   const [favoriteActors, setFavoriteActors] = useState(new Set());
+  const [gameStartTime] = useState(Date.now());
 
   useEffect(() => {
     loadFavoriteActors();
@@ -220,6 +222,9 @@ const GameScreen = ({ route, navigation }) => {
 
   const handleGameComplete = async (finalMoves) => {
     try {
+      const gameEndTime = Date.now();
+      const timeTaken = Math.floor((gameEndTime - gameStartTime) / 1000); // seconds
+
       // Collect all actors and movies from the paths
       const allActors = [];
       const allMovies = [];
@@ -244,7 +249,36 @@ const GameScreen = ({ route, navigation }) => {
         isWin: true,
       });
 
-      // Prepare rewards data
+      // Handle daily challenge completion
+      if (isDaily && challengeId) {
+        try {
+          await DailyChallengeService.submitResult(finalMoves, timeTaken, [
+            ...leftPath,
+            ...rightPath,
+          ]);
+
+          // Show daily challenge specific alert
+          Alert.alert(
+            '🏆 Daily Challenge Complete!',
+            `You solved today's challenge in ${finalMoves} moves!\nTime: ${Math.floor(
+              timeTaken / 60,
+            )}m ${timeTaken % 60}s`,
+            [
+              {
+                text: 'View Leaderboard',
+                onPress: () => navigation.navigate('DailyChallengeScreen'),
+              },
+              { text: 'Continue', style: 'cancel' },
+            ],
+          );
+          return;
+        } catch (dailyError) {
+          console.error('Error submitting daily challenge result:', dailyError);
+          // Fall through to regular completion handling
+        }
+      }
+
+      // Prepare rewards data for regular games
       const rewardsData = {
         moves: finalMoves,
         expGained: result.expGained,
@@ -258,7 +292,7 @@ const GameScreen = ({ route, navigation }) => {
         rewardsData.newLevel = result.stats.level;
       }
 
-      // Show standard win alert first
+      // Show standard win alert
       Alert.alert('🎉 You Win!', `You connected both sides in ${finalMoves} moves!`, [
         {
           text: 'View Rewards',
