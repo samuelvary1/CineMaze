@@ -84,6 +84,19 @@ const GameScreen = ({ route, navigation }) => {
     Alert.alert('🎉 Welcome to Premium!', 'You can now add actors to favorites!');
   };
 
+  const showHelpInstructions = () => {
+    Alert.alert(
+      '🎮 How to Play',
+      'Connect two movies by finding actors they share!\n\n' +
+        '• Tap an actor to see their movies\n' +
+        '• Tap a movie to see its actors\n' +
+        '• Build a path from one side to the other\n' +
+        '• Try to solve it in the fewest moves possible!\n\n' +
+        '⭐ Tap the star next to actors to add them to favorites',
+      [{ text: 'Got it!', style: 'default' }],
+    );
+  };
+
   const addToWatchlist = async (movie) => {
     try {
       const jsonValue = await AsyncStorage.getItem('watchlist');
@@ -359,7 +372,6 @@ const GameScreen = ({ route, navigation }) => {
         <View key={`${side}-actor-${node.data.id}`} style={styles.nodeCard}>
           <Image source={{ uri: profilePath }} style={styles.poster} />
           <Text style={styles.nodeTitle}>{name}</Text>
-          <Text style={styles.subTitle}>Filmography:</Text>
           <ScrollView style={styles.actorScrollView}>
             {filmography.map((movie, index) => (
               <TouchableOpacity
@@ -390,12 +402,17 @@ const GameScreen = ({ route, navigation }) => {
           </View>
           <Text style={styles.tagline}>Discover Movies and Actors Through Play</Text>
         </View>
-        <TouchableOpacity
-          style={styles.headerButton}
-          onPress={() => navigation.navigate('AccountOverviewScreen')}
-        >
-          <Text style={styles.headerButtonText}>👤</Text>
-        </TouchableOpacity>
+        <View style={styles.headerButtons}>
+          <TouchableOpacity style={styles.headerButton} onPress={showHelpInstructions}>
+            <Text style={styles.headerButtonText}>❓</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.headerButton}
+            onPress={() => navigation.navigate('AccountOverviewScreen')}
+          >
+            <Text style={styles.headerButtonText}>👤</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       <Text style={styles.title}>
@@ -480,6 +497,10 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
     letterSpacing: 0.3,
     opacity: 0.8,
+  },
+  headerButtons: {
+    flexDirection: 'row',
+    gap: 8,
   },
   headerButton: {
     backgroundColor: '#FFFFFF',
@@ -622,7 +643,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   favoritedActorText: {
-    color: '#FFFFFF', // Changed from teal to white
+    color: '#2980B9', // Keep the same color as normal text
     fontWeight: 'bold',
   },
   favoritedActorButton: {

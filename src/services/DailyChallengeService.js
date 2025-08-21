@@ -1,4 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { TMDB_API_KEY } from '@env';
 
 const STORAGE_KEYS = {
   DAILY_CHALLENGE_RESULT: 'dailyChallengeResult',
@@ -432,6 +433,56 @@ class DailyChallengeService {
     }
 
     return false;
+  }
+
+  // Fetch full actor data from TMDB API for a movie
+  async fetchMovieActors(movieId) {
+    try {
+      const creditsRes = await fetch(
+        `https://api.themoviedb.org/3/movie/${movieId}/credits?api_key=${TMDB_API_KEY}&language=en-US`,
+      );
+      const credits = await creditsRes.json();
+
+      const actors = (credits.cast || []).slice(0, 10).map((actor) => ({
+        id: actor.id,
+        name: actor.name,
+        profilePath: actor.profile_path,
+      }));
+
+      return actors;
+    } catch (error) {
+      console.error('Error fetching movie actors:', error);
+      return [];
+    }
+  }
+
+  // Get today's challenge with enhanced actor data
+  async getTodaysChallengeWithActors() {
+    const baseChallenge = this.getTodaysChallenge();
+
+    try {
+      // Fetch full actor data for both movies
+      const [movieAActors, movieBActors] = await Promise.all([
+        this.fetchMovieActors(baseChallenge.movieA.id),
+        this.fetchMovieActors(baseChallenge.movieB.id),
+      ]);
+
+      return {
+        ...baseChallenge,
+        movieA: {
+          ...baseChallenge.movieA,
+          actors: movieAActors.length > 0 ? movieAActors : baseChallenge.movieA.actors,
+        },
+        movieB: {
+          ...baseChallenge.movieB,
+          actors: movieBActors.length > 0 ? movieBActors : baseChallenge.movieB.actors,
+        },
+      };
+    } catch (error) {
+      console.error('Error fetching enhanced challenge data:', error);
+      // Fall back to base challenge if API fails
+      return baseChallenge;
+    }
   }
 }
 

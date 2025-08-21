@@ -10,7 +10,6 @@ const MovieCard = memo(({ movie, onAddToWatchlist }) => {
         <Image source={{ uri: movie.posterPath || PLACEHOLDER_IMAGE }} style={styles.poster} />
       </TouchableOpacity>
       <Text style={styles.movieTitle}>{movie.title}</Text>
-      <Text style={styles.actorListTitle}>Top Actors:</Text>
       {movie.actors.map((actor) => (
         <Text key={actor.id} style={styles.actorName}>
           {actor.name}
@@ -56,12 +55,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     textAlign: 'center',
     color: '#2C3E50',
-  },
-  actorListTitle: {
-    marginTop: 6, // Reduced from 10
-    fontWeight: 'bold',
-    fontSize: 13, // Slightly smaller
-    color: '#34495E',
   },
   actorName: {
     fontSize: 13, // Slightly smaller

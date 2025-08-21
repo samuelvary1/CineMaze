@@ -30,8 +30,8 @@ const DailyChallengeScreen = ({ navigation }) => {
       // Check for new day
       await DailyChallengeService.checkNewDay();
 
-      // Get today's challenge
-      const challenge = DailyChallengeService.getTodaysChallenge();
+      // Get today's challenge with enhanced actor data
+      const challenge = await DailyChallengeService.getTodaysChallengeWithActors();
       setTodaysChallenge(challenge);
 
       // Check if completed
