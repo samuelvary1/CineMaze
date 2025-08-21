@@ -2,9 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import SubscriptionService, { FEATURES } from '../services/SubscriptionService';
 import PaywallModal from '../components/PaywallModal';
+import PlayerStats from '../components/PlayerStats';
 
 const AccountOverviewScreen = ({ navigation }) => {
   const [showPaywall, setShowPaywall] = useState(false);
+  const [showPlayerStats, setShowPlayerStats] = useState(false);
   const [subscriptionStatus, setSubscriptionStatus] = useState(null);
 
   useEffect(() => {
@@ -131,6 +133,10 @@ const AccountOverviewScreen = ({ navigation }) => {
         >
           <Text style={styles.buttonText}>🏆 Achievements</Text>
         </TouchableOpacity>
+
+        <TouchableOpacity style={styles.button} onPress={() => setShowPlayerStats(true)}>
+          <Text style={styles.buttonText}>📊 Player Stats</Text>
+        </TouchableOpacity>
       </View>
 
       <PaywallModal
@@ -138,6 +144,8 @@ const AccountOverviewScreen = ({ navigation }) => {
         onClose={() => setShowPaywall(false)}
         onSubscribe={handleSubscriptionSuccess}
       />
+
+      <PlayerStats visible={showPlayerStats} onClose={() => setShowPlayerStats(false)} />
     </View>
   );
 };
@@ -272,7 +280,7 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     padding: 12, // Reduced from 15
-    paddingBottom: 25, // Add bottom padding to move buttons up from bottom
+    paddingBottom: 50, // Increased from 25 to add more space from bottom
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -288,21 +296,21 @@ const styles = StyleSheet.create({
   },
   button: {
     backgroundColor: '#4ECDC4',
-    paddingVertical: 12, // Reduced from 14
-    paddingHorizontal: 30,
-    borderRadius: 20,
-    marginBottom: 12, // Reduced from 15
-    width: '85%',
+    paddingVertical: 10, // Reduced from 12
+    paddingHorizontal: 25, // Reduced from 30
+    borderRadius: 18, // Slightly reduced from 20
+    marginBottom: 10, // Reduced from 12
+    width: '75%', // Reduced from 85%
     alignItems: 'center',
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
-      height: 6,
+      height: 4, // Reduced shadow for smaller buttons
     },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
-    borderWidth: 3,
+    shadowOpacity: 0.25, // Slightly reduced
+    shadowRadius: 6, // Reduced from 8
+    elevation: 6, // Reduced from 8
+    borderWidth: 2, // Reduced from 3
     borderTopColor: '#7EDDDD',
     borderLeftColor: '#7EDDDD',
     borderRightColor: '#3EBBBB',
@@ -312,7 +320,7 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     color: '#FFFFFF',
-    fontSize: 18,
+    fontSize: 16, // Reduced from 18
     fontWeight: 'bold',
     textShadowColor: 'rgba(0, 0, 0, 0.2)',
     textShadowOffset: { width: 0, height: 1 },
