@@ -112,6 +112,13 @@ const AccountOverviewScreen = ({ navigation }) => {
           <Text style={styles.buttonText}>🎯 New Game</Text>
         </TouchableOpacity>
 
+        <TouchableOpacity
+          style={styles.button}
+          onPress={() => navigation.navigate('DailyChallengeScreen')}
+        >
+          <Text style={styles.buttonText}>🗓️ Daily Challenge</Text>
+        </TouchableOpacity>
+
         <TouchableOpacity style={styles.button} onPress={handleWatchlistPress}>
           <Text style={styles.buttonText}>📋 Watchlist</Text>
         </TouchableOpacity>
@@ -253,7 +260,7 @@ const styles = StyleSheet.create({
   logoImageContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 15, // Reduced from 30 to move icon up
+    marginTop: 5, // Reduced from 15 to move logo up more
     marginBottom: 8, // Reduced from 10
     paddingHorizontal: 20,
   },
