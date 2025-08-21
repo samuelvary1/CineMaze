@@ -1,4 +1,14 @@
-# App Store Connect Setup Guide
+# App Store Connect Setup Guide - Complete Launch Checklist
+
+## 🎯 **CRITICAL PATH TO LAUNCH**
+
+### Prerequisites
+
+1. ✅ Apple Developer Account ($99/year) - [Sign up here](https://developer.apple.com/programs/)
+2. ✅ Valid payment method
+3. ✅ Your app built and ready to archive
+
+---
 
 ## 📱 Create New App Record
 
@@ -44,49 +54,50 @@ _(Unique identifier for your app)_
 - **Availability**: All countries/regions
 - **App Store Distribution**: Available on the App Store
 
-## 🔄 In-App Purchases Configuration
+## 🔄 In-App Purchases Configuration - **THIS IS CRITICAL**
+
+⚠️ **IMPORTANT**: Your code expects `com.cinemaze.premium.monthly` - make sure this matches exactly!
 
 ### Step 1: Create Subscription Group
 
 1. Go to "Features" → "In-App Purchases"
-2. Click "Manage" next to "Subscription Groups"
-3. Click "Create Subscription Group"
-4. **Reference Name**: `CineMaze Premium Subscriptions`
-5. **App Store Display Name**: `CineMaze Premium`
+2. Click "+" → "Auto-Renewable Subscriptions"
+3. Create new subscription group:
+   - **Reference Name**: `CineMaze Premium Subscriptions`
+   - **App Store Display Name**: `CineMaze Premium`
 
-### Step 2: Create Monthly Subscription
+### Step 2: Create Monthly Subscription (REQUIRED)
 
-1. Click "Create In-App Purchase"
-2. Select "Auto-Renewable Subscription"
-3. **Product ID**: `com.cinemaze.premium.monthly`
-4. **Reference Name**: `CineMaze Premium Monthly`
-5. **Subscription Group**: Select the group created above
+1. Inside the subscription group, click "Create Subscription"
+2. **Product ID**: `com.cinemaze.premium.monthly` ⚠️ **MUST MATCH YOUR CODE**
+3. **Reference Name**: `CineMaze Premium Monthly`
 
 #### Subscription Details
 
 - **Subscription Duration**: 1 Month
-- **Price**: Select your desired price tier (e.g., $4.99/month)
-- **App Store Display Name**: `Premium Monthly`
-- **Description**: `Unlock unlimited movie discoveries, remove ads, and access exclusive features with CineMaze Premium.`
+- **Price**: $0.99 (Tier 1) or your preferred price
+- **Display Name**: `Premium Monthly`
+- **Description**: `Unlimited daily plays and watchlist access`
 
-#### Subscription Localizations
+#### Required for Subscriptions
 
-Add the same information for other languages if needed.
+- **Privacy Policy URL**: You'll need to create and host this
+- **Terms of Use URL**: Optional but recommended
 
-### Step 3: Create Annual Subscription
+### Step 3: Subscription Review Information
 
-1. Click "Create In-App Purchase"
-2. Select "Auto-Renewable Subscription"
-3. **Product ID**: `com.cinemaze.premium.yearly`
-4. **Reference Name**: `CineMaze Premium Yearly`
-5. **Subscription Group**: Select the same group
+**Screenshot for Review**: Upload screenshot showing premium features
+**Review Notes**:
 
-#### Subscription Details
+```
+This subscription unlocks:
+- Unlimited daily movie game plays
+- Ability to save movies to watchlist
+- Access to favorite actors feature
+- No ads or play limits
 
-- **Subscription Duration**: 1 Year
-- **Price**: Select annual price tier (e.g., $39.99/year)
-- **App Store Display Name**: `Premium Yearly`
-- **Description**: `Get a full year of CineMaze Premium at a discounted rate. Unlock unlimited discoveries and exclusive features.`
+Test with sandbox account provided.
+```
 
 ## 📝 App Store Listing Content
 
@@ -216,11 +227,59 @@ Before submitting for review:
 - [ ] Test subscription flow on TestFlight
 - [ ] Verify restore purchases functionality
 
-## 🚀 Next Steps
+## 🚀 **IMMEDIATE ACTION STEPS**
 
-1. **Complete this setup** in App Store Connect
-2. **Upload a build** via Xcode or Transporter
-3. **Submit for review** once everything is configured
-4. **Monitor review status** (typically 24-48 hours)
+### Today (Day 1):
 
-The app is ready for App Store submission with real IAP integration and proper legal compliance!
+1. **Sign up for Apple Developer Program** if not done ($99/year)
+2. **Create app in App Store Connect** using info above
+3. **Set up the subscription product** with exact Product ID: `com.cinemaze.premium.monthly`
+
+### Tomorrow (Day 2):
+
+1. **Archive your app in Xcode**:
+
+   ```bash
+   # In Xcode:
+   1. Select "Any iOS Device" target
+   2. Product → Archive
+   3. Upload to App Store Connect
+   ```
+
+2. **Upload screenshots** (take from your device/simulator)
+
+### Day 3:
+
+1. **Test with TestFlight** - verify subscription works
+2. **Submit for App Store Review**
+
+### Timeline:
+
+- **Setup**: 1-2 days
+- **Review**: 24-48 hours typically
+- **Launch**: Within 1 week! 🎉
+
+## 🔧 **Critical Verification**
+
+Before submitting, verify this matches your code:
+
+```javascript
+// In your SubscriptionService.js:
+const SUBSCRIPTION_SKUS = {
+  MONTHLY: Platform.OS === 'ios' ? 'com.cinemaze.premium.monthly' : 'premium_monthly',
+};
+```
+
+**App Store Connect Product ID must be exactly**: `com.cinemaze.premium.monthly`
+
+## 📞 **If You Get Stuck**
+
+- **Apple Support**: https://developer.apple.com/support/
+- **IAP Documentation**: https://developer.apple.com/in-app-purchase/
+- **Common issues**: Usually product ID mismatches or missing privacy policy
+
+**You're very close to launch!** 🚀 The hard development work is done - this is just configuration.
+
+---
+
+_Need help with any specific step? The subscription setup is the most critical part for your app to work correctly._
