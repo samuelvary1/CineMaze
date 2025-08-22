@@ -97,6 +97,33 @@ const GameScreen = ({ route, navigation }) => {
     );
   };
 
+  const resetGame = () => {
+    Alert.alert(
+      '🔄 Start Over',
+      'Are you sure you want to reset your progress? This will clear all your moves and start fresh.',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Start Over',
+          style: 'destructive',
+          onPress: () => {
+            // Reset to initial state
+            setLeftNode({ type: 'movie', data: movieA });
+            setRightNode({ type: 'movie', data: movieB });
+            setLeftPath([{ type: 'movie', data: movieA }]);
+            setRightPath([{ type: 'movie', data: movieB }]);
+            setMoves(0);
+            setIsConnected(false);
+            setLoading(false);
+          },
+        },
+      ],
+    );
+  };
+
   const addToWatchlist = async (movie) => {
     try {
       const jsonValue = await AsyncStorage.getItem('watchlist');
@@ -406,6 +433,11 @@ const GameScreen = ({ route, navigation }) => {
           <TouchableOpacity style={styles.headerButton} onPress={showHelpInstructions}>
             <Text style={styles.headerButtonText}>❓</Text>
           </TouchableOpacity>
+          {!isDaily && (
+            <TouchableOpacity style={styles.headerButton} onPress={resetGame}>
+              <Text style={styles.headerButtonText}>🔄</Text>
+            </TouchableOpacity>
+          )}
           <TouchableOpacity
             style={styles.headerButton}
             onPress={() => navigation.navigate('AccountOverviewScreen')}
