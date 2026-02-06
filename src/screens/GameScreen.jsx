@@ -15,6 +15,7 @@ import uuid from 'react-native-uuid';
 import GameStatsService from '../services/GameStatsService';
 import DailyChallengeService from '../services/DailyChallengeService';
 import GameSummaryCard from '../components/GameSummaryCard';
+import PathMapModal from '../components/PathMapModal';
 import FavoriteActorsService from '../services/FavoriteActorsService';
 
 const IMAGE_BASE = 'https://image.tmdb.org/t/p/w500';
@@ -35,6 +36,7 @@ const GameScreen = ({ route, navigation }) => {
   const [favoriteActors, setFavoriteActors] = useState(new Set());
   const [gameStartTime] = useState(Date.now());
   const [lastSide, setLastSide] = useState(null);
+  const [showPathMap, setShowPathMap] = useState(false);
 
   // Refs to avoid stale closure in updateSide
   const leftPathRef = useRef(leftPath);
@@ -349,26 +351,9 @@ const GameScreen = ({ route, navigation }) => {
     }
   };
 
-  const renderPathBreadcrumbs = (path, side) => {
-    if (path.length <= 1) {
-      return null;
-    }
-    return (
-      <View style={styles.breadcrumbContainer}>
-        {path.slice(0, -1).map((node, index) => (
-          <Text key={`breadcrumb-${side}-${index}`} style={styles.breadcrumbText} numberOfLines={1}>
-            {index > 0 ? ' → ' : ''}
-            {node.type === 'movie' ? '🎬' : '🎭'} {node.data.title || node.data.name}
-          </Text>
-        ))}
-      </View>
-    );
-  };
-
   const renderNode = (node, side) => {
     const sideLabel = side === 'A' ? 'Left' : 'Right';
     const sideColor = side === 'A' ? '#3498DB' : '#E67E22';
-    const path = side === 'A' ? leftPath : rightPath;
     if (node.type === 'movie') {
       const { title, posterPath, actors } = node.data;
 
@@ -377,7 +362,6 @@ const GameScreen = ({ route, navigation }) => {
           <View style={[styles.sideLabel, { backgroundColor: sideColor }]}>
             <Text style={styles.sideLabelText}>{sideLabel} Path</Text>
           </View>
-          {renderPathBreadcrumbs(path, side)}
           <TouchableOpacity
             onPress={() => {
               Alert.alert(title, 'Add to watchlist?', [
@@ -430,7 +414,6 @@ const GameScreen = ({ route, navigation }) => {
           <View style={[styles.sideLabel, { backgroundColor: sideColor }]}>
             <Text style={styles.sideLabelText}>{sideLabel} Path</Text>
           </View>
-          {renderPathBreadcrumbs(path, side)}
           <Image source={{ uri: profilePath }} style={styles.poster} />
           <Text style={styles.nodeTitle}>{name}</Text>
           <ScrollView style={styles.actorScrollView}>
@@ -456,46 +439,66 @@ const GameScreen = ({ route, navigation }) => {
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      <View style={styles.header}>
-        <View style={styles.logoContainer}>
-          <View style={styles.logoTextContainer}>
-            <Text style={styles.logoText}>CineMaze</Text>
-            <View style={styles.logoAccent} />
-          </View>
-          <Text style={styles.tagline}>Discover Movies and Actors Through Play</Text>
-        </View>
-        <View style={styles.headerButtons}>
-          <TouchableOpacity style={styles.headerButton} onPress={showHelpInstructions}>
-            <Text style={styles.headerButtonText}>❓</Text>
-          </TouchableOpacity>
-          {moves > 0 && !isConnected && (
-            <TouchableOpacity
-              style={styles.headerButton}
-              onPress={undoLastMove}
-              disabled={!lastSide}
-            >
-              <Text style={[styles.headerButtonText, !lastSide && { opacity: 0.3 }]}>↩️</Text>
-            </TouchableOpacity>
-          )}
-          {!isDaily && (
-            <TouchableOpacity style={styles.headerButton} onPress={resetGame}>
-              <Text style={styles.headerButtonText}>🔄</Text>
-            </TouchableOpacity>
-          )}
-          <TouchableOpacity
-            style={styles.headerButton}
-            onPress={() => navigation.navigate('AccountOverviewScreen')}
-          >
-            <Text style={styles.headerButtonText}>👤</Text>
-          </TouchableOpacity>
-        </View>
+      {/* Top bar */}
+      <View style={styles.topBar}>
+        <Text style={styles.topBarTitle}>CineMaze</Text>
+        <Text style={styles.moveBadge}>Moves: {moves}</Text>
       </View>
 
-      <Text style={styles.title}>
-        🎯 Connect {movieA.title} ↔ {movieB.title}
-      </Text>
-      <Text style={styles.moves}>Moves: {moves}</Text>
-      {isConnected && <Text style={styles.win}>✅ You've connected the movies!</Text>}
+      {/* Goal card */}
+      <View style={styles.goalCard}>
+        <View style={styles.goalSide}>
+          <Text style={styles.goalEmoji}>🎬</Text>
+          <Text style={styles.goalMovie} numberOfLines={2}>
+            {movieA.title}
+          </Text>
+        </View>
+        <Text style={styles.goalArrow}>↔</Text>
+        <View style={styles.goalSide}>
+          <Text style={styles.goalEmoji}>🎬</Text>
+          <Text style={styles.goalMovie} numberOfLines={2}>
+            {movieB.title}
+          </Text>
+        </View>
+      </View>
+      {isConnected && <Text style={styles.win}>✅ Connected!</Text>}
+
+      {/* Action buttons */}
+      <View style={styles.actionBar}>
+        <TouchableOpacity style={styles.actionButton} onPress={showHelpInstructions}>
+          <Text style={styles.actionIcon}>❓</Text>
+          <Text style={styles.actionLabel}>Help</Text>
+        </TouchableOpacity>
+        {moves > 0 && (
+          <TouchableOpacity style={styles.actionButton} onPress={() => setShowPathMap(true)}>
+            <Text style={styles.actionIcon}>🗺️</Text>
+            <Text style={styles.actionLabel}>Path</Text>
+          </TouchableOpacity>
+        )}
+        {moves > 0 && !isConnected && (
+          <TouchableOpacity
+            style={[styles.actionButton, !lastSide && styles.actionButtonDisabled]}
+            onPress={undoLastMove}
+            disabled={!lastSide}
+          >
+            <Text style={styles.actionIcon}>↩️</Text>
+            <Text style={styles.actionLabel}>Undo</Text>
+          </TouchableOpacity>
+        )}
+        {!isDaily && (
+          <TouchableOpacity style={styles.actionButton} onPress={resetGame}>
+            <Text style={styles.actionIcon}>🔄</Text>
+            <Text style={styles.actionLabel}>Reset</Text>
+          </TouchableOpacity>
+        )}
+        <TouchableOpacity
+          style={styles.actionButton}
+          onPress={() => navigation.navigate('AccountOverviewScreen')}
+        >
+          <Text style={styles.actionIcon}>👤</Text>
+          <Text style={styles.actionLabel}>Profile</Text>
+        </TouchableOpacity>
+      </View>
 
       <View style={styles.nodeRow}>
         {renderNode(leftNode, 'A')}
@@ -510,6 +513,15 @@ const GameScreen = ({ route, navigation }) => {
           navigation.navigate('RandomMoviesScreen');
         }}
         gameData={summaryData}
+      />
+
+      <PathMapModal
+        visible={showPathMap}
+        onClose={() => setShowPathMap(false)}
+        leftPath={leftPath}
+        rightPath={rightPath}
+        movieA={movieA}
+        movieB={movieB}
       />
 
       {loading && (
@@ -533,101 +545,103 @@ const styles = StyleSheet.create({
     backgroundColor: '#B8DDF0', // Powder blue background
     minHeight: '100%',
   },
-  header: {
+  topBar: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     width: '100%',
-    marginBottom: 16,
-    paddingHorizontal: 4,
+    marginBottom: 10,
   },
-  logoContainer: {
-    alignItems: 'flex-start',
-    flex: 1,
-  },
-  logoTextContainer: {
-    position: 'relative',
-    marginBottom: 4,
-  },
-  logoText: {
-    fontSize: 30,
+  topBarTitle: {
+    fontSize: 24,
     fontWeight: '900',
     color: '#2C3E50',
-    textShadowColor: 'rgba(255, 255, 255, 0.9)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
     letterSpacing: -0.5,
   },
-  logoAccent: {
-    position: 'absolute',
-    bottom: -2,
-    left: 0,
-    right: 0,
-    height: 3,
-    backgroundColor: '#4ECDC4',
-    borderRadius: 2,
-    shadowColor: '#4ECDC4',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.3,
-    shadowRadius: 2,
-  },
-  tagline: {
+  moveBadge: {
     fontSize: 14,
-    color: '#34495E',
-    fontWeight: '500',
-    fontStyle: 'italic',
-    letterSpacing: 0.3,
-    opacity: 0.8,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    backgroundColor: '#3498DB',
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    overflow: 'hidden',
   },
-  headerButtons: {
+  goalCard: {
     flexDirection: 'row',
-    gap: 8,
-  },
-  headerButton: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 20,
-    width: 40,
-    height: 40,
-    justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#2C3E50',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.15,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 14,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    width: '100%',
+    marginBottom: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
-    borderWidth: 0.5,
-    borderColor: 'rgba(44, 62, 80, 0.1)',
   },
-  headerButtonText: {
-    fontSize: 20,
+  goalSide: {
+    flex: 1,
+    alignItems: 'center',
   },
-  title: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 8,
-    textAlign: 'center',
-    color: '#2C3E50',
-    textShadowColor: 'rgba(255, 255, 255, 0.8)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
-  },
-  moves: {
+  goalEmoji: {
     fontSize: 16,
-    marginBottom: 8,
-    color: '#34495E',
-    fontWeight: '600',
+    marginBottom: 2,
+  },
+  goalMovie: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#2C3E50',
+    textAlign: 'center',
+  },
+  goalArrow: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#BDC3C7',
+    marginHorizontal: 8,
   },
   win: {
-    fontSize: 16,
+    fontSize: 15,
     color: '#27AE60',
     fontWeight: 'bold',
-    marginBottom: 8,
-    textShadowColor: 'rgba(255, 255, 255, 0.8)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
+    marginBottom: 6,
+  },
+  actionBar: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 10,
+    marginBottom: 14,
+    flexWrap: 'wrap',
+  },
+  actionButton: {
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    minWidth: 56,
+    shadowColor: '#2C3E50',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 2,
+    borderWidth: 0.5,
+    borderColor: 'rgba(44, 62, 80, 0.08)',
+  },
+  actionButtonDisabled: {
+    opacity: 0.35,
+  },
+  actionIcon: {
+    fontSize: 18,
+  },
+  actionLabel: {
+    fontSize: 10,
+    fontWeight: '600',
+    color: '#7F8C8D',
+    marginTop: 2,
   },
   nodeRow: {
     flexDirection: 'row',
@@ -653,20 +667,6 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
-  },
-  breadcrumbContainer: {
-    backgroundColor: 'rgba(255, 255, 255, 0.5)',
-    borderRadius: 6,
-    paddingHorizontal: 6,
-    paddingVertical: 3,
-    marginBottom: 6,
-    width: '100%',
-    maxHeight: 40,
-  },
-  breadcrumbText: {
-    fontSize: 10,
-    color: '#34495E',
-    fontWeight: '500',
   },
   poster: {
     width: 140,
