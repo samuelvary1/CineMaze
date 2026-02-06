@@ -9,6 +9,7 @@ import {
   ScrollView,
   Dimensions,
 } from 'react-native';
+import DeepLinkService from '../services/DeepLinkService';
 
 const { width } = Dimensions.get('window');
 
@@ -82,12 +83,14 @@ const GameSummaryCard = ({ visible, onClose, onHome, gameData }) => {
 
   const handleShare = async () => {
     const starText = '⭐'.repeat(stars);
+    const challengeLink = DeepLinkService.buildChallengeLink(movieA.id, movieB.id);
     const shareLines = [
-      `CineMaze ${starText}`,
+      `🎬 CineMaze ${starText}`,
       `${movieA.title} ↔ ${movieB.title}`,
       `${moves} moves · ${formatTime(timeTaken)}`,
       '',
-      'Can you beat my score?',
+      '🎯 Can you beat my score?',
+      challengeLink,
     ];
 
     try {
