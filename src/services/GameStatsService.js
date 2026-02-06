@@ -74,6 +74,56 @@ export const ACHIEVEMENTS = {
     icon: '💯',
     reward: 'Elite player status!',
   },
+  // Difficulty-based achievements
+  EASY_FIRST: {
+    id: 'easy_first',
+    title: '🌱 Warm Up',
+    description: 'Complete your first Easy pair',
+    icon: '🌱',
+    reward: 'Everyone starts somewhere!',
+  },
+  MEDIUM_FIRST: {
+    id: 'medium_first',
+    title: '🎯 Stepping Up',
+    description: 'Complete your first Medium pair',
+    icon: '🎯',
+    reward: "You're getting good!",
+  },
+  HARD_FIRST: {
+    id: 'hard_first',
+    title: '🔥 Brave Soul',
+    description: 'Complete your first Hard pair',
+    icon: '🔥',
+    reward: 'Fearless!',
+  },
+  EASY_25: {
+    id: 'easy_25',
+    title: '🌿 Easy Street',
+    description: 'Complete 25 Easy pairs',
+    icon: '🌿',
+    reward: 'Smooth sailing!',
+  },
+  MEDIUM_25: {
+    id: 'medium_25',
+    title: '⚙️ Gears Turning',
+    description: 'Complete 25 Medium pairs',
+    icon: '⚙️',
+    reward: 'Brain gains!',
+  },
+  HARD_25: {
+    id: 'hard_25',
+    title: '💎 Diamond Mind',
+    description: 'Complete 25 Hard pairs',
+    icon: '💎',
+    reward: 'Seriously impressive!',
+  },
+  HARD_100: {
+    id: 'hard_100',
+    title: '👑 Cinema Royalty',
+    description: 'Complete 100 Hard pairs',
+    icon: '👑',
+    reward: 'You are the ultimate movie master!',
+  },
 };
 
 // Daily challenges
@@ -123,6 +173,10 @@ class GameStatsService {
         level: 1,
         experience: 0,
         nextLevelExp: 100,
+        // Difficulty tracking
+        easyWins: 0,
+        mediumWins: 0,
+        hardWins: 0,
       };
 
       if (statsString) {
@@ -161,7 +215,7 @@ class GameStatsService {
 
   // Record a completed game
   async recordGameComplete(gameData) {
-    const { moves, actors, movies, isWin } = gameData;
+    const { moves, actors, movies, isWin, difficulty } = gameData;
     const stats = await this.getPlayerStats();
 
     // Update basic stats
@@ -186,8 +240,19 @@ class GameStatsService {
         stats.quickGames += 1;
       }
 
-      // Award experience points
-      const expGained = this.calculateExperience(moves);
+      // Track difficulty wins
+      if (difficulty) {
+        if (difficulty.key === 'easy') {
+          stats.easyWins = (stats.easyWins || 0) + 1;
+        } else if (difficulty.key === 'medium') {
+          stats.mediumWins = (stats.mediumWins || 0) + 1;
+        } else if (difficulty.key === 'hard') {
+          stats.hardWins = (stats.hardWins || 0) + 1;
+        }
+      }
+
+      // Award experience points (with difficulty multiplier)
+      const expGained = this.calculateExperience(moves, difficulty);
       stats.experience += expGained;
 
       // Check for level up
@@ -214,14 +279,19 @@ class GameStatsService {
     // Check for achievements
     const newAchievements = await this.checkAchievements(stats);
 
-    return { stats, newAchievements, expGained: isWin ? this.calculateExperience(moves) : 0 };
+    return {
+      stats,
+      newAchievements,
+      expGained: isWin ? this.calculateExperience(moves, difficulty) : 0,
+    };
   }
 
   // Calculate experience points based on performance
-  calculateExperience(moves) {
+  calculateExperience(moves, difficulty) {
     const baseExp = 10;
     const bonus = Math.max(0, (6 - moves) * 5); // Bonus for fewer moves
-    return baseExp + bonus;
+    const raw = baseExp + bonus;
+    return Math.floor(raw * (difficulty?.xpMultiplier || 1));
   }
 
   // Update daily streak
@@ -288,6 +358,28 @@ class GameStatsService {
           break;
         case 'century_club':
           earned = stats.totalWins >= 100;
+          break;
+        // Difficulty achievements
+        case 'easy_first':
+          earned = (stats.easyWins || 0) >= 1;
+          break;
+        case 'medium_first':
+          earned = (stats.mediumWins || 0) >= 1;
+          break;
+        case 'hard_first':
+          earned = (stats.hardWins || 0) >= 1;
+          break;
+        case 'easy_25':
+          earned = (stats.easyWins || 0) >= 25;
+          break;
+        case 'medium_25':
+          earned = (stats.mediumWins || 0) >= 25;
+          break;
+        case 'hard_25':
+          earned = (stats.hardWins || 0) >= 25;
+          break;
+        case 'hard_100':
+          earned = (stats.hardWins || 0) >= 100;
           break;
       }
 

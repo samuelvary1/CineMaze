@@ -15,6 +15,7 @@ import DeveloperSettings from '../components/DeveloperSettings';
 import PlayerStats from '../components/PlayerStats';
 import DailyChallengeService from '../services/DailyChallengeService';
 import GameStatsService from '../services/GameStatsService';
+import DifficultyService from '../services/DifficultyService';
 
 const BASE_URL = 'https://api.themoviedb.org/3';
 const IMAGE_BASE = 'https://image.tmdb.org/t/p/w500';
@@ -129,6 +130,7 @@ const RandomMoviesScreen = ({ navigation }) => {
   const [streak, setStreak] = useState(0);
   const [playerLevel, setPlayerLevel] = useState(1);
   const [totalWins, setTotalWins] = useState(0);
+  const [difficulty, setDifficulty] = useState(null);
 
   const loadPlayerInfo = useCallback(async () => {
     try {
@@ -180,6 +182,16 @@ const RandomMoviesScreen = ({ navigation }) => {
     }
 
     setMovies([mA, mB]);
+
+    // Classify difficulty based on shared actors
+    try {
+      const diff = await DifficultyService.classifyPair(mA, mB);
+      setDifficulty(diff);
+    } catch (error) {
+      console.error('Error classifying difficulty:', error);
+      setDifficulty(null);
+    }
+
     setInitialLoading(false);
     setLoading(false);
   };
@@ -210,6 +222,7 @@ const RandomMoviesScreen = ({ navigation }) => {
       navigation.navigate('GameScreen', {
         movieA: movies[0],
         movieB: movies[1],
+        difficulty,
       });
     }
   };
@@ -282,6 +295,14 @@ const RandomMoviesScreen = ({ navigation }) => {
       </View>
 
       <MoviesContainer movies={movies} onAddToWatchlist={addToWatchlist} isLoading={loading} />
+
+      {difficulty && !loading && movies.length === 2 && (
+        <View style={[styles.difficultyBadge, { backgroundColor: difficulty.color }]}>
+          <Text style={styles.difficultyText}>
+            {difficulty.emoji} {difficulty.label} — {difficulty.xpMultiplier}x XP
+          </Text>
+        </View>
+      )}
 
       <View style={styles.buttonContainer}>
         <TouchableOpacity
@@ -419,8 +440,20 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     width: '100%',
     gap: 12,
-    marginTop: 60, // Significantly increased from 35 to prevent dynamic height issues
-    marginBottom: 12, // Also increased bottom margin for better balance
+    marginTop: 16,
+    marginBottom: 12,
+  },
+  difficultyBadge: {
+    alignSelf: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 20,
+    borderRadius: 20,
+    marginTop: 12,
+  },
+  difficultyText: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: '700',
   },
   shuffleButton: {
     backgroundColor: '#FF6B6B',

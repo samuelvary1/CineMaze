@@ -22,7 +22,14 @@ const IMAGE_BASE = 'https://image.tmdb.org/t/p/w500';
 const PLACEHOLDER_IMAGE = 'https://via.placeholder.com/150x225?text=No+Image';
 
 const GameScreen = ({ route, navigation }) => {
-  const { movieA, movieB, isDaily = false, challengeId } = route.params;
+  const {
+    movieA,
+    movieB,
+    isDaily = false,
+    challengeId,
+    difficulty = null,
+    previousBest = null,
+  } = route.params;
 
   const [leftNode, setLeftNode] = useState({ type: 'movie', data: movieA });
   const [rightNode, setRightNode] = useState({ type: 'movie', data: movieB });
@@ -272,12 +279,33 @@ const GameScreen = ({ route, navigation }) => {
     try {
       const lp = currentLeft || leftPath;
       const rp = currentRight || rightPath;
+      const timeTaken = Math.floor((Date.now() - gameStartTime) / 1000);
+      const finalMoves = moves + 1;
+
+      // Star rating (same logic as GameSummaryCard)
+      let stars = 1;
+      if (finalMoves <= 3) {
+        stars = 3;
+      } else if (finalMoves <= 5) {
+        stars = 2;
+      }
+
       const newConnection = {
         id: uuid.v4(),
         start: movieA,
         target: movieB,
         path: [...lp, ...rp.slice(1).reverse()],
-        moves: moves + 1,
+        moves: finalMoves,
+        timeTaken,
+        stars,
+        difficulty: difficulty
+          ? {
+              key: difficulty.key,
+              label: difficulty.label,
+              emoji: difficulty.emoji,
+              color: difficulty.color,
+            }
+          : null,
         timestamp: new Date().toISOString(),
       };
 
@@ -320,6 +348,7 @@ const GameScreen = ({ route, navigation }) => {
         actors: allActors,
         movies: allMovies,
         isWin: true,
+        difficulty,
       });
 
       // Handle daily challenge submission (non-blocking)
@@ -343,6 +372,7 @@ const GameScreen = ({ route, navigation }) => {
         stats: result.stats,
         newAchievements: result.newAchievements,
         isDaily,
+        difficulty,
       });
       setShowSummary(true);
     } catch (error) {
@@ -442,7 +472,14 @@ const GameScreen = ({ route, navigation }) => {
       {/* Top bar */}
       <View style={styles.topBar}>
         <Text style={styles.topBarTitle}>CineMaze</Text>
-        <Text style={styles.moveBadge}>Moves: {moves}</Text>
+        <View style={{ alignItems: 'flex-end' }}>
+          <Text style={styles.moveBadge}>Moves: {moves}</Text>
+          {previousBest && (
+            <Text style={{ fontSize: 10, color: '#7F8C8D', marginTop: 2 }}>
+              Best: {previousBest}
+            </Text>
+          )}
+        </View>
       </View>
 
       {/* Goal card */}
@@ -462,6 +499,14 @@ const GameScreen = ({ route, navigation }) => {
         </View>
       </View>
       {isConnected && <Text style={styles.win}>✅ Connected!</Text>}
+
+      {difficulty && (
+        <View style={[styles.difficultyChip, { backgroundColor: difficulty.color }]}>
+          <Text style={styles.difficultyChipText}>
+            {difficulty.emoji} {difficulty.label} — {difficulty.xpMultiplier}x XP
+          </Text>
+        </View>
+      )}
 
       {/* Action buttons */}
       <View style={styles.actionBar}>
@@ -609,6 +654,17 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 6,
   },
+  difficultyChip: {
+    paddingVertical: 4,
+    paddingHorizontal: 14,
+    borderRadius: 12,
+    marginBottom: 10,
+  },
+  difficultyChipText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '700',
+  },
   actionBar: {
     flexDirection: 'row',
     justifyContent: 'center',
@@ -645,13 +701,12 @@ const styles = StyleSheet.create({
   },
   nodeRow: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
+    justifyContent: 'space-between',
     width: '100%',
-    flexWrap: 'wrap',
-    gap: 16,
+    gap: 8,
   },
   nodeCard: {
-    width: 165,
+    flex: 1,
     alignItems: 'center',
     marginBottom: 16,
   },
@@ -669,8 +724,8 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
   poster: {
-    width: 140,
-    height: 210,
+    width: '85%',
+    aspectRatio: 2 / 3,
     borderRadius: 12,
     backgroundColor: '#ccc',
     // Raised edge effects

@@ -76,6 +76,7 @@ const GameSummaryCard = ({ visible, onClose, onHome, gameData }) => {
     stats,
     newAchievements,
     isDaily,
+    difficulty,
   } = gameData;
 
   const stars = getStarRating(moves);
@@ -85,7 +86,7 @@ const GameSummaryCard = ({ visible, onClose, onHome, gameData }) => {
     const starText = '⭐'.repeat(stars);
     const challengeLink = DeepLinkService.buildChallengeLink(movieA.id, movieB.id);
     const shareLines = [
-      `🎬 CineMaze ${starText}`,
+      `🎬 CineMaze ${starText}${difficulty ? ` ${difficulty.emoji} ${difficulty.label}` : ''}`,
       `${movieA.title} ↔ ${movieB.title}`,
       `${moves} moves · ${formatTime(timeTaken)}`,
       '',
@@ -152,7 +153,14 @@ const GameSummaryCard = ({ visible, onClose, onHome, gameData }) => {
                 <Text style={styles.dailyBadgeText}>🗓️ DAILY CHALLENGE</Text>
               </View>
             )}
-
+            {/* Difficulty badge */}
+            {difficulty && (
+              <View style={[styles.difficultyBadge, { backgroundColor: difficulty.color }]}>
+                <Text style={styles.difficultyBadgeText}>
+                  {difficulty.emoji} {difficulty.label} — {difficulty.xpMultiplier}x XP
+                </Text>
+              </View>
+            )}
             {/* Connection Title */}
             <Text style={styles.connectionTitle}>
               {movieA.title} ↔ {movieB.title}
@@ -303,6 +311,20 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '800',
     letterSpacing: 1,
+  },
+
+  // Difficulty badge
+  difficultyBadge: {
+    alignSelf: 'center',
+    paddingHorizontal: 14,
+    paddingVertical: 4,
+    borderRadius: 12,
+    marginBottom: 10,
+  },
+  difficultyBadgeText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '700',
   },
 
   // Title

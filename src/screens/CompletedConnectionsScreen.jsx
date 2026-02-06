@@ -1,12 +1,56 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, Image, Alert, TouchableOpacity } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  Image,
+  Alert,
+  TouchableOpacity,
+  Share,
+} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import DeepLinkService from '../services/DeepLinkService';
+import DifficultyService from '../services/DifficultyService';
 
 const IMAGE_BASE = 'https://image.tmdb.org/t/p/w500';
 const PLACEHOLDER = 'https://via.placeholder.com/150x225?text=No+Image';
 
+const formatTime = (seconds) => {
+  if (!seconds) {
+    return '--';
+  }
+  const mins = Math.floor(seconds / 60);
+  const secs = seconds % 60;
+  if (mins > 0) {
+    return `${mins}m ${secs}s`;
+  }
+  return `${secs}s`;
+};
+
+const getStarDisplay = (stars) => {
+  if (!stars) {
+    return '';
+  }
+  return '★'.repeat(stars) + '☆'.repeat(3 - stars);
+};
+
+const getStarColor = (stars) => {
+  switch (stars) {
+    case 3:
+      return '#FFD700';
+    case 2:
+      return '#C0C0C0';
+    case 1:
+      return '#CD7F32';
+    default:
+      return '#888';
+  }
+};
+
 const CompletedConnectionsScreen = ({ navigation }) => {
   const [connections, setConnections] = useState([]);
+  const [replayingId, setReplayingId] = useState(null);
 
   useEffect(() => {
     const loadConnections = async () => {
@@ -23,46 +67,78 @@ const CompletedConnectionsScreen = ({ navigation }) => {
     return unsubscribe;
   }, [navigation]);
 
-  const addToWatchlist = async (movie) => {
-    if (!movie) {
-      Alert.alert('Error', 'Movie data not available.');
-      return;
+  const handleReplay = async (connection) => {
+    setReplayingId(connection.id);
+    try {
+      // Fetch fresh movie data with actors for replay
+      const [movieA, movieB] = await Promise.all([
+        DeepLinkService.fetchMovieById(connection.start.id),
+        DeepLinkService.fetchMovieById(connection.target.id),
+      ]);
+
+      if (!movieA || !movieB) {
+        Alert.alert('Error', 'Could not load movie data for replay.');
+        return;
+      }
+
+      // Classify difficulty for the replay
+      let difficulty = null;
+      try {
+        difficulty = await DifficultyService.classifyPair(movieA, movieB);
+      } catch (err) {
+        console.error('Error classifying difficulty:', err);
+      }
+
+      navigation.navigate('GameScreen', {
+        movieA,
+        movieB,
+        difficulty,
+        previousBest: connection.moves,
+      });
+    } catch (error) {
+      console.error('Error replaying:', error);
+      Alert.alert('Error', 'Failed to start replay.');
+    } finally {
+      setReplayingId(null);
     }
+  };
+
+  const handleShare = async (connection) => {
+    const stars = connection.stars || 1;
+    const starText = '⭐'.repeat(stars);
+    const diffLabel = connection.difficulty
+      ? ` ${connection.difficulty.emoji} ${connection.difficulty.label}`
+      : '';
+    const challengeLink = DeepLinkService.buildChallengeLink(
+      connection.start.id,
+      connection.target.id,
+    );
+
+    const shareLines = [
+      `🎬 CineMaze ${starText}${diffLabel}`,
+      `${connection.start.title} ↔ ${connection.target.title}`,
+      `${connection.moves} moves · ${formatTime(connection.timeTaken)}`,
+      '',
+      '🎯 Can you beat my score?',
+      challengeLink,
+    ];
 
     try {
-      const jsonValue = await AsyncStorage.getItem('watchlist');
-      const current = jsonValue != null ? JSON.parse(jsonValue) : [];
-      const exists = current.find((m) => m.id === movie.id);
-
-      if (!exists) {
-        const movieForWatchlist = {
-          id: movie.id,
-          title: movie.title,
-          posterPath: movie.posterPath || movie.poster_path,
-        };
-        const updated = [...current, movieForWatchlist];
-        await AsyncStorage.setItem('watchlist', JSON.stringify(updated));
-        Alert.alert('✅ Added to Watchlist', movie.title);
-      } else {
-        Alert.alert('ℹ️ Already in Watchlist', movie.title);
-      }
-    } catch (e) {
-      Alert.alert('Error', 'Failed to update watchlist.');
+      await Share.share({ message: shareLines.join('\n') });
+    } catch (error) {
+      console.error('Error sharing:', error);
     }
   };
 
   const renderCard = (connection) => {
-    // Helper function to get proper poster URL
     const getPosterUrl = (movie) => {
       if (!movie) {
         return PLACEHOLDER;
       }
       if (movie.posterPath) {
-        // If posterPath already contains full URL, use it
         if (movie.posterPath.startsWith('http')) {
           return movie.posterPath;
         }
-        // If it's just the path, add base URL
         return IMAGE_BASE + movie.posterPath;
       }
       if (movie.poster_path) {
@@ -71,54 +147,94 @@ const CompletedConnectionsScreen = ({ navigation }) => {
       return PLACEHOLDER;
     };
 
+    const stars = connection.stars || 0;
+    const starColor = getStarColor(stars);
+    const isReplaying = replayingId === connection.id;
+
     return (
-      <View key={connection.id} style={styles.card}>
-        <View style={styles.movieTitles}>
-          <Text style={styles.movieTitle}>{connection.start?.title || 'Unknown Movie'}</Text>
-          <Text style={styles.arrow}>→</Text>
-          <Text style={styles.movieTitle}>{connection.target?.title || 'Unknown Movie'}</Text>
+      <TouchableOpacity
+        key={connection.id}
+        style={styles.card}
+        onPress={() => handleReplay(connection)}
+        activeOpacity={0.7}
+      >
+        {/* Score header */}
+        <View style={styles.scoreRow}>
+          {stars > 0 && (
+            <Text style={[styles.stars, { color: starColor }]}>{getStarDisplay(stars)}</Text>
+          )}
+          {connection.difficulty && (
+            <View style={[styles.diffBadge, { backgroundColor: connection.difficulty.color }]}>
+              <Text style={styles.diffBadgeText}>
+                {connection.difficulty.emoji} {connection.difficulty.label}
+              </Text>
+            </View>
+          )}
         </View>
 
-        <View style={styles.row}>
+        {/* Movie posters + titles */}
+        <View style={styles.movieRow}>
+          <View style={styles.movieSide}>
+            <Image source={{ uri: getPosterUrl(connection.start) }} style={styles.poster} />
+            <Text style={styles.movieTitle} numberOfLines={2}>
+              {connection.start?.title || 'Unknown'}
+            </Text>
+          </View>
+          <Text style={styles.arrow}>↔</Text>
+          <View style={styles.movieSide}>
+            <Image source={{ uri: getPosterUrl(connection.target) }} style={styles.poster} />
+            <Text style={styles.movieTitle} numberOfLines={2}>
+              {connection.target?.title || 'Unknown'}
+            </Text>
+          </View>
+        </View>
+
+        {/* Stats row */}
+        <View style={styles.statsRow}>
+          <View style={styles.statItem}>
+            <Text style={styles.statValue}>{connection.moves || '?'}</Text>
+            <Text style={styles.statLabel}>Moves</Text>
+          </View>
+          <View style={styles.statDivider} />
+          <View style={styles.statItem}>
+            <Text style={styles.statValue}>{formatTime(connection.timeTaken)}</Text>
+            <Text style={styles.statLabel}>Time</Text>
+          </View>
+          <View style={styles.statDivider} />
+          <View style={styles.statItem}>
+            <Text style={styles.statValue}>
+              {new Date(connection.timestamp).toLocaleDateString(undefined, {
+                month: 'short',
+                day: 'numeric',
+              })}
+            </Text>
+            <Text style={styles.statLabel}>Date</Text>
+          </View>
+        </View>
+
+        {/* Action buttons */}
+        <View style={styles.actionRow}>
           <TouchableOpacity
-            onPress={() => addToWatchlist(connection.start)}
-            activeOpacity={0.8}
-            style={styles.posterContainer}
+            style={styles.replayButton}
+            onPress={() => handleReplay(connection)}
+            disabled={isReplaying}
           >
-            <Image
-              source={{
-                uri: getPosterUrl(connection.start),
-              }}
-              style={styles.poster}
-            />
+            <Text style={styles.replayButtonText}>
+              {isReplaying ? '⏳ Loading...' : '🔄 Replay'}
+            </Text>
           </TouchableOpacity>
-          <Text style={styles.arrow}>→</Text>
-          <TouchableOpacity
-            onPress={() => addToWatchlist(connection.target)}
-            activeOpacity={0.8}
-            style={styles.posterContainer}
-          >
-            <Image
-              source={{
-                uri: getPosterUrl(connection.target),
-              }}
-              style={styles.poster}
-            />
+          <TouchableOpacity style={styles.shareButton} onPress={() => handleShare(connection)}>
+            <Text style={styles.shareButtonText}>📤 Share</Text>
           </TouchableOpacity>
         </View>
-        <Text style={styles.pathLength}>
-          Moves: {connection.moves || connection.path?.length || 0}
-        </Text>
-        <Text style={styles.timestamp}>
-          Completed: {new Date(connection.timestamp).toLocaleDateString()}
-        </Text>
-      </View>
+      </TouchableOpacity>
     );
   };
 
   return (
     <ScrollView style={styles.scrollView} contentContainerStyle={styles.container}>
-      <Text style={styles.title}>📚 Completed Connections</Text>
+      <Text style={styles.title}>📚 Completed Games</Text>
+      <Text style={styles.subtitle}>Tap a game to replay and try to beat your score</Text>
       {connections.length === 0 ? (
         <Text style={styles.empty}>You haven't finished any games yet.</Text>
       ) : (
@@ -131,19 +247,25 @@ const CompletedConnectionsScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   scrollView: {
     flex: 1,
-    backgroundColor: '#B8DDF0', // Powder blue background
+    backgroundColor: '#B8DDF0',
   },
   container: {
-    padding: 20,
+    padding: 16,
     alignItems: 'center',
     paddingBottom: 40,
     minHeight: '100%',
   },
   title: {
-    fontSize: 26,
+    fontSize: 24,
     fontWeight: 'bold',
-    marginBottom: 20,
     color: '#2C3E50',
+    marginBottom: 4,
+  },
+  subtitle: {
+    fontSize: 13,
+    color: '#7F8C8D',
+    marginBottom: 20,
+    fontStyle: 'italic',
   },
   empty: {
     fontSize: 16,
@@ -154,77 +276,124 @@ const styles = StyleSheet.create({
   },
   card: {
     width: '100%',
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
-    borderRadius: 12,
-    padding: 20,
-    marginBottom: 20,
-    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 16,
     shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
-    shadowRadius: 4,
+    shadowRadius: 6,
     elevation: 3,
   },
-  movieTitles: {
+  scoreRow: {
     flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 15,
-    width: '100%',
     justifyContent: 'space-between',
-  },
-  movieTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#2C3E50',
-    textAlign: 'center',
-    flex: 1,
-    paddingHorizontal: 5,
-  },
-  row: {
-    flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 10,
   },
-  posterContainer: {
-    borderRadius: 8,
+  stars: {
+    fontSize: 20,
+    fontWeight: '700',
+    letterSpacing: 2,
+  },
+  diffBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+    borderRadius: 10,
+  },
+  diffBadgeText: {
+    color: '#FFFFFF',
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  movieRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 12,
+  },
+  movieSide: {
+    flex: 1,
+    alignItems: 'center',
   },
   poster: {
-    width: 100,
-    height: 150,
-    borderRadius: 8,
+    width: 80,
+    height: 120,
+    borderRadius: 10,
     backgroundColor: '#ccc',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.2,
-    shadowRadius: 3,
-    elevation: 4,
     borderWidth: 1,
-    borderTopColor: '#FFFFFF',
-    borderLeftColor: '#FFFFFF',
-    borderRightColor: '#CCCCCC',
-    borderBottomColor: '#CCCCCC',
+    borderColor: 'rgba(0,0,0,0.08)',
+  },
+  movieTitle: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#2C3E50',
+    textAlign: 'center',
+    marginTop: 6,
   },
   arrow: {
-    fontSize: 28,
-    marginHorizontal: 15,
-    color: '#4ECDC4',
+    fontSize: 22,
+    color: '#BDC3C7',
     fontWeight: 'bold',
+    marginHorizontal: 8,
   },
-  pathLength: {
-    marginTop: 10,
-    fontWeight: 'bold',
+  statsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#F8FAFE',
+    borderRadius: 10,
+    paddingVertical: 8,
+    marginBottom: 12,
+  },
+  statItem: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  statValue: {
+    fontSize: 15,
+    fontWeight: '700',
     color: '#2C3E50',
   },
-  timestamp: {
-    fontSize: 12,
-    color: '#555',
-    marginTop: 4,
+  statLabel: {
+    fontSize: 10,
+    color: '#7F8C8D',
+    fontWeight: '500',
+    marginTop: 2,
+  },
+  statDivider: {
+    width: 1,
+    height: 24,
+    backgroundColor: '#E0E0E0',
+  },
+  actionRow: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  replayButton: {
+    flex: 1,
+    backgroundColor: '#4ECDC4',
+    paddingVertical: 10,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  replayButtonText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  shareButton: {
+    flex: 1,
+    backgroundColor: '#3498DB',
+    paddingVertical: 10,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  shareButtonText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '700',
   },
 });
 

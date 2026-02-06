@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import GameStatsService from '../services/GameStatsService';
 
 const AchievementsScreen = ({ navigation }) => {
-  const [completedConnections, setCompletedConnections] = useState([]);
+  const [stats, setStats] = useState(null);
+  const [earnedIds, setEarnedIds] = useState([]);
   const [watchlistCount, setWatchlistCount] = useState(0);
-  const [favoriteActorsCount, setFavoriteActorsCount] = useState(0);
 
   useEffect(() => {
     loadAchievementData();
@@ -13,99 +14,69 @@ const AchievementsScreen = ({ navigation }) => {
 
   const loadAchievementData = async () => {
     try {
-      // Load completed connections
-      const connectionsData = await AsyncStorage.getItem('completedConnections');
-      const connections = connectionsData ? JSON.parse(connectionsData) : [];
-      setCompletedConnections(connections);
+      const playerStats = await GameStatsService.getPlayerStats();
+      setStats(playerStats);
 
-      // Load watchlist count
+      const earned = await GameStatsService.getAchievements();
+      setEarnedIds(earned);
+
       const watchlistData = await AsyncStorage.getItem('watchlist');
       const watchlist = watchlistData ? JSON.parse(watchlistData) : [];
       setWatchlistCount(watchlist.length);
-
-      // Load favorite actors count
-      const actorsData = await AsyncStorage.getItem('favoriteActors');
-      const actors = actorsData ? JSON.parse(actorsData) : [];
-      setFavoriteActorsCount(actors.length);
     } catch (error) {
       console.error('Error loading achievement data:', error);
     }
   };
 
-  const achievements = [
-    {
-      id: 'first_game',
-      title: 'First Steps',
-      description: 'Complete your first movie connection',
-      icon: '🎯',
-      unlocked: completedConnections.length >= 1,
-      progress: Math.min(completedConnections.length, 1),
-      total: 1,
-    },
-    {
-      id: 'game_master',
-      title: 'Game Master',
-      description: 'Complete 10 movie connections',
-      icon: '🎮',
-      unlocked: completedConnections.length >= 10,
-      progress: Math.min(completedConnections.length, 10),
-      total: 10,
-    },
-    {
-      id: 'cinema_expert',
-      title: 'Cinema Expert',
-      description: 'Complete 25 movie connections',
-      icon: '🎬',
-      unlocked: completedConnections.length >= 25,
-      progress: Math.min(completedConnections.length, 25),
-      total: 25,
-    },
-    {
-      id: 'movie_legend',
-      title: 'Movie Legend',
-      description: 'Complete 50 movie connections',
-      icon: '🏆',
-      unlocked: completedConnections.length >= 50,
-      progress: Math.min(completedConnections.length, 50),
-      total: 50,
-    },
-    {
-      id: 'collector',
-      title: 'Collector',
-      description: 'Add 20 movies to your watchlist',
-      icon: '📚',
-      unlocked: watchlistCount >= 20,
-      progress: Math.min(watchlistCount, 20),
-      total: 20,
-    },
-    {
-      id: 'star_tracker',
-      title: 'Star Tracker',
-      description: 'Follow 15 favorite actors',
-      icon: '⭐',
-      unlocked: favoriteActorsCount >= 15,
-      progress: Math.min(favoriteActorsCount, 15),
-      total: 15,
-    },
-    {
-      id: 'speed_runner',
-      title: 'Speed Runner',
-      description: 'Complete a connection in under 30 seconds',
-      icon: '⚡',
-      unlocked: false, // This would need to be tracked in game logic
-      progress: 0,
-      total: 1,
-    },
-    {
-      id: 'perfectionist',
-      title: 'Perfectionist',
-      description: 'Complete 5 connections without any wrong guesses',
-      icon: '💎',
-      unlocked: false, // This would need to be tracked in game logic
-      progress: 0,
-      total: 5,
-    },
-  ];
+  const getProgress = (id) => {
+    if (!stats) {
+      return { progress: 0, total: 1 };
+    }
+    switch (id) {
+      case 'first_win':
+        return { progress: Math.min(stats.totalWins, 1), total: 1 };
+      case 'speed_demon':
+        return { progress: stats.bestMoveCount <= 3 ? 1 : 0, total: 1 };
+      case 'minimalist':
+        return { progress: stats.bestMoveCount <= 2 ? 1 : 0, total: 1 };
+      case 'marathon_player':
+        return { progress: 0, total: 5 };
+      case 'streak_master':
+        return { progress: Math.min(stats.currentStreak, 7), total: 7 };
+      case 'collector':
+        return { progress: Math.min(watchlistCount, 10), total: 10 };
+      case 'perfectionist':
+        return { progress: Math.min(stats.perfectGames, 10), total: 10 };
+      case 'explorer':
+        return { progress: Math.min(stats.uniqueActorsFound?.size || 0, 50), total: 50 };
+      case 'century_club':
+        return { progress: Math.min(stats.totalWins, 100), total: 100 };
+      case 'easy_first':
+        return { progress: Math.min(stats.easyWins || 0, 1), total: 1 };
+      case 'medium_first':
+        return { progress: Math.min(stats.mediumWins || 0, 1), total: 1 };
+      case 'hard_first':
+        return { progress: Math.min(stats.hardWins || 0, 1), total: 1 };
+      case 'easy_25':
+        return { progress: Math.min(stats.easyWins || 0, 25), total: 25 };
+      case 'medium_25':
+        return { progress: Math.min(stats.mediumWins || 0, 25), total: 25 };
+      case 'hard_25':
+        return { progress: Math.min(stats.hardWins || 0, 25), total: 25 };
+      case 'hard_100':
+        return { progress: Math.min(stats.hardWins || 0, 100), total: 100 };
+      default:
+        return { progress: 0, total: 1 };
+    }
+  };
+
+  // Build achievements list from the canonical ACHIEVEMENTS in GameStatsService
+  const { ACHIEVEMENTS } = require('../services/GameStatsService');
+  const achievements = Object.values(ACHIEVEMENTS).map((a) => {
+    const unlocked = earnedIds.includes(a.id);
+    const { progress, total } = getProgress(a.id);
+    return { ...a, unlocked, progress, total };
+  });
 
   const unlockedCount = achievements.filter((achievement) => achievement.unlocked).length;
 
