@@ -401,35 +401,39 @@ const GameScreen = ({ route, navigation }) => {
             <Image source={{ uri: posterPath }} style={styles.poster} />
           </TouchableOpacity>
           <Text style={styles.nodeTitle}>{title}</Text>
-          {actors.map((actor, index) => {
-            const isFavorited = favoriteActors.has(actor.id);
-            return (
-              <View key={`${side}-actor-${actor.id}-${index}`} style={styles.actorItem}>
-                <TouchableOpacity
-                  onPress={() => handleActorPress(actor, side)}
-                  style={styles.clickableItem}
-                >
-                  <Text style={[styles.linkText, isFavorited && styles.favoritedActorText]}>
-                    {isFavorited ? '⭐ ' : ''}
-                    {actor.name}
-                  </Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  onPress={() => addActorToFavorites(actor)}
-                  style={[styles.favoriteActorButton, isFavorited && styles.favoritedActorButton]}
-                >
-                  <Text
-                    style={[
-                      styles.favoriteActorButtonText,
-                      isFavorited && styles.favoritedActorButtonText,
-                    ]}
+          <ScrollView style={styles.actorScrollView} nestedScrollEnabled>
+            {actors.map((actor, index) => {
+              const isFavorited = favoriteActors.has(actor.id);
+              return (
+                <View key={`${side}-actor-${actor.id}-${index}`} style={styles.actorItem}>
+                  <TouchableOpacity onPress={() => addActorToFavorites(actor)} activeOpacity={0.7}>
+                    <Image
+                      source={{
+                        uri: actor.profilePath
+                          ? actor.profilePath.startsWith('http')
+                            ? actor.profilePath
+                            : IMAGE_BASE + actor.profilePath
+                          : PLACEHOLDER_IMAGE,
+                      }}
+                      style={[styles.actorThumb, isFavorited && styles.actorThumbFavorited]}
+                    />
+                    {isFavorited && <Text style={styles.actorThumbStar}>★</Text>}
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    onPress={() => handleActorPress(actor, side)}
+                    style={styles.clickableItem}
                   >
-                    {isFavorited ? '★' : '⭐'}
-                  </Text>
-                </TouchableOpacity>
-              </View>
-            );
-          })}
+                    <Text
+                      style={[styles.linkText, isFavorited && styles.favoritedActorText]}
+                      numberOfLines={1}
+                    >
+                      {actor.name}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              );
+            })}
+          </ScrollView>
         </View>
       );
     }
@@ -441,16 +445,26 @@ const GameScreen = ({ route, navigation }) => {
           <View style={[styles.sideLabel, { backgroundColor: sideColor }]}>
             <Text style={styles.sideLabelText}>{sideLabel} Path</Text>
           </View>
-          <Image source={{ uri: profilePath }} style={styles.poster} />
+          <TouchableOpacity onPress={() => addActorToFavorites(node.data)} activeOpacity={0.8}>
+            <Image
+              source={{ uri: profilePath }}
+              style={[styles.poster, favoriteActors.has(node.data.id) && styles.favoritedPoster]}
+            />
+            {favoriteActors.has(node.data.id) && (
+              <View style={styles.favoritedBadge}>
+                <Text style={styles.favoritedBadgeText}>★ Fav</Text>
+              </View>
+            )}
+          </TouchableOpacity>
           <Text style={styles.nodeTitle}>{name}</Text>
-          <ScrollView style={styles.actorScrollView}>
+          <ScrollView style={styles.actorScrollView} nestedScrollEnabled>
             {filmography.map((movie, index) => (
               <TouchableOpacity
                 key={`${side}-movie-${movie.id}-${index}`}
                 onPress={() => handleMoviePress(movie, side)}
                 style={styles.clickableItem}
               >
-                <Text style={styles.linkText}>
+                <Text style={styles.linkText} numberOfLines={1}>
                   {movie.title}
                   {movie.release_date ? ` (${movie.release_date.slice(0, 4)})` : ''}
                 </Text>
@@ -706,6 +720,7 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     marginBottom: 16,
+    overflow: 'hidden',
   },
   sideLabel: {
     paddingVertical: 3,
@@ -752,19 +767,21 @@ const styles = StyleSheet.create({
   linkText: {
     color: '#3498DB',
     marginTop: 2,
-    fontSize: 13,
-    textAlign: 'center',
+    fontSize: 12,
+    textAlign: 'left',
     fontWeight: '500',
+    flexShrink: 1,
   },
   clickableItem: {
     paddingVertical: 4,
-    paddingHorizontal: 8,
+    paddingHorizontal: 6,
     borderRadius: 6,
     marginVertical: 1,
     backgroundColor: 'rgba(255, 255, 255, 0.3)',
     minHeight: 28,
     justifyContent: 'center',
     flex: 1,
+    flexShrink: 1,
   },
   loadingOverlay: {
     position: 'absolute',
@@ -796,45 +813,55 @@ const styles = StyleSheet.create({
     color: '#34495E',
   },
   actorScrollView: {
-    maxHeight: 300, // Increased from 200 to show more movies
+    maxHeight: 300,
     width: '100%',
   },
   actorItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    marginVertical: 1,
+    marginVertical: 3,
+    gap: 6,
+    width: '100%',
   },
-  favoriteActorButton: {
+  actorThumb: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#ddd',
+    borderWidth: 2,
+    borderColor: 'transparent',
+  },
+  actorThumbFavorited: {
+    borderColor: '#FFD700',
+  },
+  actorThumbStar: {
+    position: 'absolute',
+    bottom: -2,
+    right: -2,
+    fontSize: 12,
+    color: '#FFD700',
+  },
+  favoritedPoster: {
+    borderWidth: 3,
+    borderColor: '#FFD700',
+  },
+  favoritedBadge: {
+    position: 'absolute',
+    bottom: 6,
+    alignSelf: 'center',
+    backgroundColor: 'rgba(255, 215, 0, 0.9)',
+    paddingHorizontal: 8,
     paddingVertical: 2,
-    paddingHorizontal: 6,
-    backgroundColor: '#FF6B6B',
-    borderRadius: 6,
-    borderWidth: 1,
-    borderTopColor: '#FF9999',
-    borderLeftColor: '#FF9999',
-    borderRightColor: '#CC5555',
-    borderBottomColor: '#CC5555',
-    marginLeft: 8,
+    borderRadius: 8,
   },
-  favoriteActorButtonText: {
-    color: '#FFFFFF',
-    fontSize: 10,
-    fontWeight: 'bold',
+  favoritedBadgeText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#2C3E50',
   },
   favoritedActorText: {
-    color: '#2980B9', // Keep the same color as normal text
+    color: '#2980B9',
     fontWeight: 'bold',
-  },
-  favoritedActorButton: {
-    backgroundColor: '#4ECDC4',
-    borderTopColor: '#7EDDDD',
-    borderLeftColor: '#7EDDDD',
-    borderRightColor: '#3EBBBB',
-    borderBottomColor: '#3EBBBB',
-  },
-  favoritedActorButtonText: {
-    color: '#FFFFFF',
   },
 });
 

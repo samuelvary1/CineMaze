@@ -7,6 +7,7 @@ import {
   ScrollView,
   Alert,
   TouchableOpacity,
+  Linking,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { TMDB_API_KEY } from '@env';
@@ -311,12 +312,43 @@ const RandomMoviesScreen = ({ navigation }) => {
         </TouchableOpacity>
       </View>
 
+      <TouchableOpacity
+        style={styles.tmdbBadge}
+        onPress={() => Linking.openURL('https://www.themoviedb.org/')}
+        activeOpacity={0.7}
+      >
+        <Text style={styles.tmdbText}>Powered by</Text>
+        <Text style={styles.tmdbLogo}>TMDB</Text>
+      </TouchableOpacity>
+
       <PlayerStats visible={showPlayerStats} onClose={() => setShowPlayerStats(false)} />
     </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
+  tmdbBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 24,
+    marginBottom: 8,
+    gap: 6,
+  },
+  tmdbText: {
+    fontSize: 11,
+    color: '#7F8C8D',
+  },
+  tmdbLogo: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: '#01D277',
+    backgroundColor: '#0D253F',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+    overflow: 'hidden',
+  },
   loadingContainer: {
     flex: 1,
     alignItems: 'center',
