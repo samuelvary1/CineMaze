@@ -12,9 +12,7 @@ import {
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { TMDB_API_KEY } from '@env';
 import FavoriteActorsService from '../services/FavoriteActorsService';
-
-const IMAGE_BASE = 'https://image.tmdb.org/t/p/w500';
-const PLACEHOLDER_IMAGE = 'https://via.placeholder.com/150x225?text=No+Image';
+import { IMAGE_BASE, PLACEHOLDER_IMAGE, logger } from '../utils/constants';
 
 const MovieDetailScreen = ({ route, navigation }) => {
   const { movieId, movieTitle, moviePosterPath } = route.params;
@@ -35,7 +33,7 @@ const MovieDetailScreen = ({ route, navigation }) => {
           const exists = current.find((m) => m.id === movieId);
           setIsInWatchlist(!!exists);
         } catch (error) {
-          console.error('Error checking watchlist status:', error);
+          logger.error('Error checking watchlist status:', error);
         }
       };
 
@@ -53,7 +51,7 @@ const MovieDetailScreen = ({ route, navigation }) => {
           }
           setFavoriteActors(favoriteIds);
         } catch (error) {
-          console.error('Error checking favorite actors status:', error);
+          logger.error('Error checking favorite actors status:', error);
         }
       };
 
@@ -89,7 +87,7 @@ const MovieDetailScreen = ({ route, navigation }) => {
       // Check favorite actors status after movie data is loaded
       await checkFavoriteActorsStatus(topActors);
     } catch (error) {
-      console.error('Error loading movie data:', error);
+      logger.error('Error loading movie data:', error);
       Alert.alert('Error', 'Failed to load movie details.');
     } finally {
       setLoading(false);
@@ -143,7 +141,7 @@ const MovieDetailScreen = ({ route, navigation }) => {
         setFavoriteActors((prev) => new Set([...prev, actor.id]));
       }
     } catch (error) {
-      console.error('Error adding actor to favorites:', error);
+      logger.error('Error adding actor to favorites:', error);
       Alert.alert('Error', 'Failed to add actor to favorites.');
     }
   };

@@ -11,15 +11,12 @@ import {
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { TMDB_API_KEY } from '@env';
-import uuid from 'react-native-uuid';
 import GameStatsService from '../services/GameStatsService';
 import DailyChallengeService from '../services/DailyChallengeService';
 import GameSummaryCard from '../components/GameSummaryCard';
 import PathMapModal from '../components/PathMapModal';
 import FavoriteActorsService from '../services/FavoriteActorsService';
-
-const IMAGE_BASE = 'https://image.tmdb.org/t/p/w500';
-const PLACEHOLDER_IMAGE = 'https://via.placeholder.com/150x225?text=No+Image';
+import { IMAGE_BASE, PLACEHOLDER_IMAGE, logger } from '../utils/constants';
 
 const GameScreen = ({ route, navigation }) => {
   const {
@@ -68,7 +65,7 @@ const GameScreen = ({ route, navigation }) => {
         setFavoriteActors(actorIds);
       }
     } catch (error) {
-      console.error('Error loading favorite actors:', error);
+      logger.error('Error loading favorite actors:', error);
     }
   };
 
@@ -83,7 +80,7 @@ const GameScreen = ({ route, navigation }) => {
       // Refresh favorite actors list
       await loadFavoriteActors();
     } catch (error) {
-      console.error('Error adding actor to favorites:', error);
+      logger.error('Error adding actor to favorites:', error);
       Alert.alert('Error', 'Failed to add actor to favorites.');
     }
   };
@@ -249,7 +246,7 @@ const GameScreen = ({ route, navigation }) => {
       updateSide(side, node);
       setLastSide(side);
     } catch (error) {
-      console.error('Error fetching actor:', error);
+      logger.error('Error fetching actor:', error);
       Alert.alert('Connection Error', 'Failed to load actor data. Please try again.');
     } finally {
       setLoading(false);
@@ -268,7 +265,7 @@ const GameScreen = ({ route, navigation }) => {
       updateSide(side, node);
       setLastSide(side);
     } catch (error) {
-      console.error('Error fetching movie:', error);
+      logger.error('Error fetching movie:', error);
       Alert.alert('Connection Error', 'Failed to load movie data. Please try again.');
     } finally {
       setLoading(false);
@@ -291,7 +288,7 @@ const GameScreen = ({ route, navigation }) => {
       }
 
       const newConnection = {
-        id: uuid.v4(),
+        id: Date.now().toString(36) + Math.random().toString(36).slice(2),
         start: movieA,
         target: movieB,
         path: [...lp, ...rp.slice(1).reverse()],
@@ -356,7 +353,7 @@ const GameScreen = ({ route, navigation }) => {
         try {
           await DailyChallengeService.submitResult(finalMoves, timeTaken, [...lp, ...rp]);
         } catch (dailyError) {
-          console.error('Error submitting daily challenge result:', dailyError);
+          logger.error('Error submitting daily challenge result:', dailyError);
         }
       }
 
@@ -376,7 +373,7 @@ const GameScreen = ({ route, navigation }) => {
       });
       setShowSummary(true);
     } catch (error) {
-      console.error('Error handling game completion:', error);
+      logger.error('Error handling game completion:', error);
       Alert.alert('🎉 You Win!', `You connected both sides in ${finalMoves} moves!`);
     }
   };

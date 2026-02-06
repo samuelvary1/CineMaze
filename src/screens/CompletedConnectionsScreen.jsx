@@ -12,21 +12,7 @@ import {
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import DeepLinkService from '../services/DeepLinkService';
 import DifficultyService from '../services/DifficultyService';
-
-const IMAGE_BASE = 'https://image.tmdb.org/t/p/w500';
-const PLACEHOLDER = 'https://via.placeholder.com/150x225?text=No+Image';
-
-const formatTime = (seconds) => {
-  if (!seconds) {
-    return '--';
-  }
-  const mins = Math.floor(seconds / 60);
-  const secs = seconds % 60;
-  if (mins > 0) {
-    return `${mins}m ${secs}s`;
-  }
-  return `${secs}s`;
-};
+import { IMAGE_BASE, PLACEHOLDER_IMAGE, formatTime, logger } from '../utils/constants';
 
 const getStarDisplay = (stars) => {
   if (!stars) {
@@ -86,7 +72,7 @@ const CompletedConnectionsScreen = ({ navigation }) => {
       try {
         difficulty = await DifficultyService.classifyPair(movieA, movieB);
       } catch (err) {
-        console.error('Error classifying difficulty:', err);
+        logger.error('Error classifying difficulty:', err);
       }
 
       navigation.navigate('GameScreen', {
@@ -96,7 +82,7 @@ const CompletedConnectionsScreen = ({ navigation }) => {
         previousBest: connection.moves,
       });
     } catch (error) {
-      console.error('Error replaying:', error);
+      logger.error('Error replaying:', error);
       Alert.alert('Error', 'Failed to start replay.');
     } finally {
       setReplayingId(null);
@@ -126,14 +112,14 @@ const CompletedConnectionsScreen = ({ navigation }) => {
     try {
       await Share.share({ message: shareLines.join('\n') });
     } catch (error) {
-      console.error('Error sharing:', error);
+      logger.error('Error sharing:', error);
     }
   };
 
   const renderCard = (connection) => {
     const getPosterUrl = (movie) => {
       if (!movie) {
-        return PLACEHOLDER;
+        return PLACEHOLDER_IMAGE;
       }
       if (movie.posterPath) {
         if (movie.posterPath.startsWith('http')) {
@@ -144,7 +130,7 @@ const CompletedConnectionsScreen = ({ navigation }) => {
       if (movie.poster_path) {
         return IMAGE_BASE + movie.poster_path;
       }
-      return PLACEHOLDER;
+      return PLACEHOLDER_IMAGE;
     };
 
     const stars = connection.stars || 0;

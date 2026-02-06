@@ -1,8 +1,5 @@
 import { TMDB_API_KEY } from '@env';
-
-const BASE_URL = 'https://api.themoviedb.org/3';
-const IMAGE_BASE = 'https://image.tmdb.org/t/p/w500';
-const PLACEHOLDER_IMAGE = 'https://via.placeholder.com/150x225?text=No+Image';
+import { BASE_URL, IMAGE_BASE, PLACEHOLDER_IMAGE, logger } from '../utils/constants';
 
 /**
  * Fetch a movie by TMDB ID with its top actors (same shape as RandomMoviesScreen).
@@ -37,7 +34,7 @@ const fetchMovieById = async (movieId) => {
       actors: topActors,
     };
   } catch (error) {
-    console.error('Error fetching movie by ID:', error);
+    logger.error('Error fetching movie by ID:', error);
     return null;
   }
 };
@@ -73,7 +70,7 @@ const parseDeepLink = (url) => {
 
     return { movieIdA, movieIdB };
   } catch (error) {
-    console.error('Error parsing deep link:', error);
+    logger.error('Error parsing deep link:', error);
     return null;
   }
 };

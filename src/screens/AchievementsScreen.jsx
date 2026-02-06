@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import GameStatsService from '../services/GameStatsService';
+import { logger } from '../utils/constants';
 
 const AchievementsScreen = ({ navigation }) => {
   const [stats, setStats] = useState(null);
@@ -24,7 +25,7 @@ const AchievementsScreen = ({ navigation }) => {
       const watchlist = watchlistData ? JSON.parse(watchlistData) : [];
       setWatchlistCount(watchlist.length);
     } catch (error) {
-      console.error('Error loading achievement data:', error);
+      logger.error('Error loading achievement data:', error);
     }
   };
 

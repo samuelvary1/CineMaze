@@ -47,8 +47,3 @@ jest.mock('@react-navigation/native-stack', () => ({
     Screen: ({ children }) => children,
   }),
 }));
-
-// Mock @env (react-native-dotenv)
-jest.mock('@env', () => ({
-  TMDB_API_KEY: 'test-api-key',
-}));

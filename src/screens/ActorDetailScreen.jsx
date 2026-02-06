@@ -12,9 +12,7 @@ import {
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { TMDB_API_KEY } from '@env';
 import FavoriteActorsService from '../services/FavoriteActorsService';
-
-const IMAGE_BASE = 'https://image.tmdb.org/t/p/w500';
-const PLACEHOLDER_IMAGE = 'https://via.placeholder.com/150x225?text=No+Image';
+import { IMAGE_BASE, PLACEHOLDER_IMAGE, logger } from '../utils/constants';
 
 const ActorDetailScreen = ({ route, navigation }) => {
   const { actorId, actorName, actorProfilePath } = route.params;
@@ -69,7 +67,7 @@ const ActorDetailScreen = ({ route, navigation }) => {
       // Check watchlist status for all movies
       await checkWatchlistStatus(filmography);
     } catch (error) {
-      console.error('Error loading actor data:', error);
+      logger.error('Error loading actor data:', error);
       Alert.alert('Error', 'Failed to load actor details.');
     } finally {
       setLoading(false);
@@ -91,7 +89,7 @@ const ActorDetailScreen = ({ route, navigation }) => {
 
       setWatchlistMovies(inWatchlist);
     } catch (error) {
-      console.error('Error checking watchlist status:', error);
+      logger.error('Error checking watchlist status:', error);
     }
   };
 
@@ -123,7 +121,7 @@ const ActorDetailScreen = ({ route, navigation }) => {
         moviePosterPath: movie.poster_path,
       });
     } catch (error) {
-      console.error('Error navigating to movie detail:', error);
+      logger.error('Error navigating to movie detail:', error);
       Alert.alert('Error', 'Failed to open movie details.');
     }
   };

@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { TMDB_API_KEY } from '@env';
+import { logger } from '../utils/constants';
 
 const STORAGE_KEYS = {
   DAILY_CHALLENGE_RESULT: 'dailyChallengeResult',
@@ -201,7 +202,7 @@ class DailyChallengeService {
       const result = JSON.parse(resultData);
       return result.date === this.getTodayString();
     } catch (error) {
-      console.error('Error checking daily challenge completion:', error);
+      logger.error('Error checking daily challenge completion:', error);
       return false;
     }
   }
@@ -221,7 +222,7 @@ class DailyChallengeService {
 
       return result;
     } catch (error) {
-      console.error("Error getting today's result:", error);
+      logger.error("Error getting today's result:", error);
       return null;
     }
   }
@@ -250,7 +251,7 @@ class DailyChallengeService {
 
       return result;
     } catch (error) {
-      console.error('Error submitting daily challenge result:', error);
+      logger.error('Error submitting daily challenge result:', error);
       throw error;
     }
   }
@@ -271,7 +272,7 @@ class DailyChallengeService {
 
       await AsyncStorage.setItem(STORAGE_KEYS.CHALLENGE_HISTORY, JSON.stringify(recentHistory));
     } catch (error) {
-      console.error('Error adding to challenge history:', error);
+      logger.error('Error adding to challenge history:', error);
     }
   }
 
@@ -281,7 +282,7 @@ class DailyChallengeService {
       const historyData = await AsyncStorage.getItem(STORAGE_KEYS.CHALLENGE_HISTORY);
       return historyData ? JSON.parse(historyData) : [];
     } catch (error) {
-      console.error('Error getting challenge history:', error);
+      logger.error('Error getting challenge history:', error);
       return [];
     }
   }
@@ -327,7 +328,7 @@ class DailyChallengeService {
 
       return playerEntry.rank;
     } catch (error) {
-      console.error('Error updating global leaderboard:', error);
+      logger.error('Error updating global leaderboard:', error);
       return null;
     }
   }
@@ -340,7 +341,7 @@ class DailyChallengeService {
 
       return leaderboard[date] || [];
     } catch (error) {
-      console.error('Error getting leaderboard for date:', error);
+      logger.error('Error getting leaderboard for date:', error);
       return [];
     }
   }
@@ -407,7 +408,7 @@ class DailyChallengeService {
         longestStreak,
       };
     } catch (error) {
-      console.error('Error getting user stats:', error);
+      logger.error('Error getting user stats:', error);
       return {
         totalCompleted: 0,
         averageMoves: 0,
@@ -451,7 +452,7 @@ class DailyChallengeService {
 
       return actors;
     } catch (error) {
-      console.error('Error fetching movie actors:', error);
+      logger.error('Error fetching movie actors:', error);
       return [];
     }
   }
@@ -479,7 +480,7 @@ class DailyChallengeService {
         },
       };
     } catch (error) {
-      console.error('Error fetching enhanced challenge data:', error);
+      logger.error('Error fetching enhanced challenge data:', error);
       // Fall back to base challenge if API fails
       return baseChallenge;
     }

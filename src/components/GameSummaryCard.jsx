@@ -10,6 +10,7 @@ import {
   Dimensions,
 } from 'react-native';
 import DeepLinkService from '../services/DeepLinkService';
+import { formatTime, logger } from '../utils/constants';
 
 const { width } = Dimensions.get('window');
 
@@ -51,15 +52,6 @@ const getRatingColor = (stars) => {
   }
 };
 
-const formatTime = (seconds) => {
-  const mins = Math.floor(seconds / 60);
-  const secs = seconds % 60;
-  if (mins > 0) {
-    return `${mins}m ${secs}s`;
-  }
-  return `${secs}s`;
-};
-
 const GameSummaryCard = ({ visible, onClose, onHome, gameData }) => {
   if (!visible || !gameData) {
     return null;
@@ -97,7 +89,7 @@ const GameSummaryCard = ({ visible, onClose, onHome, gameData }) => {
     try {
       await Share.share({ message: shareLines.join('\n') });
     } catch (error) {
-      console.error('Error sharing:', error);
+      logger.error('Error sharing:', error);
     }
   };
 

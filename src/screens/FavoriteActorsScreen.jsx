@@ -1,9 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image, Alert } from 'react-native';
 import FavoriteActorsService from '../services/FavoriteActorsService';
-
-const PLACEHOLDER_IMAGE = 'https://via.placeholder.com/150x225?text=No+Image';
-const IMAGE_BASE = 'https://image.tmdb.org/t/p/w500';
+import { IMAGE_BASE, PLACEHOLDER_IMAGE, logger } from '../utils/constants';
 
 const FavoriteActorsScreen = ({ navigation }) => {
   const [favoriteActors, setFavoriteActors] = useState([]);
@@ -30,7 +28,7 @@ const FavoriteActorsScreen = ({ navigation }) => {
       const actors = await FavoriteActorsService.getFavoriteActors();
       setFavoriteActors(actors);
     } catch (error) {
-      console.error('Error loading favorite actors:', error);
+      logger.error('Error loading favorite actors:', error);
     } finally {
       setLoading(false);
     }

@@ -1,4 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { logger } from '../utils/constants';
 
 // Storage keys for stats
 const STORAGE_KEYS = {
@@ -193,7 +194,7 @@ class GameStatsService {
 
       return defaultStats;
     } catch (error) {
-      console.error('Error getting player stats:', error);
+      logger.error('Error getting player stats:', error);
       return this.getPlayerStats(); // Return default stats
     }
   }
@@ -209,7 +210,7 @@ class GameStatsService {
       };
       await AsyncStorage.setItem(STORAGE_KEYS.STATS, JSON.stringify(toSave));
     } catch (error) {
-      console.error('Error saving player stats:', error);
+      logger.error('Error saving player stats:', error);
     }
   }
 
@@ -402,7 +403,7 @@ class GameStatsService {
       const achievementsString = await AsyncStorage.getItem(STORAGE_KEYS.ACHIEVEMENTS);
       return achievementsString ? JSON.parse(achievementsString) : [];
     } catch (error) {
-      console.error('Error getting achievements:', error);
+      logger.error('Error getting achievements:', error);
       return [];
     }
   }
@@ -412,7 +413,7 @@ class GameStatsService {
     try {
       await AsyncStorage.setItem(STORAGE_KEYS.ACHIEVEMENTS, JSON.stringify(achievements));
     } catch (error) {
-      console.error('Error saving achievements:', error);
+      logger.error('Error saving achievements:', error);
     }
   }
 

@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Alert } from 'react-native';
+import { logger } from '../utils/constants';
 
 const FAVORITE_ACTORS_KEY = 'favoriteActors';
 
@@ -9,7 +10,7 @@ class FavoriteActorsService {
       const jsonValue = await AsyncStorage.getItem(FAVORITE_ACTORS_KEY);
       return jsonValue != null ? JSON.parse(jsonValue) : [];
     } catch (error) {
-      console.error('Error getting favorite actors:', error);
+      logger.error('Error getting favorite actors:', error);
       return [];
     }
   }
@@ -37,7 +38,7 @@ class FavoriteActorsService {
         return false;
       }
     } catch (error) {
-      console.error('Error adding favorite actor:', error);
+      logger.error('Error adding favorite actor:', error);
       Alert.alert('Error', 'Failed to add actor to favorites.');
       return false;
     }
@@ -50,7 +51,7 @@ class FavoriteActorsService {
       await AsyncStorage.setItem(FAVORITE_ACTORS_KEY, JSON.stringify(updated));
       return true;
     } catch (error) {
-      console.error('Error removing favorite actor:', error);
+      logger.error('Error removing favorite actor:', error);
       return false;
     }
   }
@@ -60,7 +61,7 @@ class FavoriteActorsService {
       const favorites = await this.getFavoriteActors();
       return favorites.some((a) => a.id === actorId);
     } catch (error) {
-      console.error('Error checking favorite actor:', error);
+      logger.error('Error checking favorite actor:', error);
       return false;
     }
   }
@@ -70,7 +71,7 @@ class FavoriteActorsService {
       await AsyncStorage.removeItem(FAVORITE_ACTORS_KEY);
       return true;
     } catch (error) {
-      console.error('Error clearing favorite actors:', error);
+      logger.error('Error clearing favorite actors:', error);
       return false;
     }
   }

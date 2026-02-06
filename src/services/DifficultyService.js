@@ -1,6 +1,5 @@
 import { TMDB_API_KEY } from '@env';
-
-const BASE_URL = 'https://api.themoviedb.org/3';
+import { BASE_URL, logger } from '../utils/constants';
 
 /**
  * Difficulty levels with XP multipliers and display info.
@@ -65,7 +64,7 @@ const classifyPair = async (movieA, movieB) => {
     }
     return DIFFICULTY.HARD;
   } catch (error) {
-    console.error('Error classifying difficulty:', error);
+    logger.error('Error classifying difficulty:', error);
     return classifyByPopularity(movieA, movieB);
   }
 };
@@ -80,7 +79,7 @@ const fetchFullCast = async (movieId) => {
     // Take top 50 — enough to find connections without being too broad
     return Array.isArray(data.cast) ? data.cast.slice(0, 50) : null;
   } catch (error) {
-    console.error('Error fetching cast:', error);
+    logger.error('Error fetching cast:', error);
     return null;
   }
 };

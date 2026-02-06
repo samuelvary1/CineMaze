@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import DailyChallengeService from '../services/DailyChallengeService';
 import MoviesContainer from '../components/MoviesContainer';
+import { formatTime, logger } from '../utils/constants';
 
 const DailyChallengeScreen = ({ navigation }) => {
   const [todaysChallenge, setTodaysChallenge] = useState(null);
@@ -53,7 +54,7 @@ const DailyChallengeScreen = ({ navigation }) => {
       const stats = await DailyChallengeService.getUserStats();
       setUserStats(stats);
     } catch (error) {
-      console.error('Error loading daily challenge:', error);
+      logger.error('Error loading daily challenge:', error);
       Alert.alert('Error', 'Failed to load daily challenge');
     } finally {
       setLoading(false);
@@ -71,12 +72,6 @@ const DailyChallengeScreen = ({ navigation }) => {
       isDaily: true,
       challengeId: todaysChallenge.id,
     });
-  };
-
-  const formatTime = (seconds) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return mins > 0 ? `${mins}m ${secs}s` : `${secs}s`;
   };
 
   const getOrdinal = (num) => {

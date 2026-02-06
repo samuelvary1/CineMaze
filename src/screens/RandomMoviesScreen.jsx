@@ -11,15 +11,11 @@ import {
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { TMDB_API_KEY } from '@env';
 import MoviesContainer from '../components/MoviesContainer';
-import DeveloperSettings from '../components/DeveloperSettings';
 import PlayerStats from '../components/PlayerStats';
 import DailyChallengeService from '../services/DailyChallengeService';
 import GameStatsService from '../services/GameStatsService';
 import DifficultyService from '../services/DifficultyService';
-
-const BASE_URL = 'https://api.themoviedb.org/3';
-const IMAGE_BASE = 'https://image.tmdb.org/t/p/w500';
-const PLACEHOLDER_IMAGE = 'https://via.placeholder.com/150x225?text=No+Image';
+import { BASE_URL, IMAGE_BASE, PLACEHOLDER_IMAGE, logger } from '../utils/constants';
 
 const fetchMovieWithActors = async () => {
   try {
@@ -115,7 +111,7 @@ const fetchMovieWithActors = async () => {
       actors: topActors,
     };
   } catch (err) {
-    console.warn('Fetch failed:', err.message);
+    logger.warn('Fetch failed:', err.message);
     return null;
   }
 };
@@ -124,7 +120,6 @@ const RandomMoviesScreen = ({ navigation }) => {
   const [movies, setMovies] = useState([]);
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
-  const [showDeveloperSettings, setShowDeveloperSettings] = useState(false);
   const [showPlayerStats, setShowPlayerStats] = useState(false);
   const [dailyChallengeCompleted, setDailyChallengeCompleted] = useState(false);
   const [streak, setStreak] = useState(0);
@@ -139,7 +134,7 @@ const RandomMoviesScreen = ({ navigation }) => {
       setPlayerLevel(stats.level || 1);
       setTotalWins(stats.totalWins || 0);
     } catch (error) {
-      console.error('Error loading player info:', error);
+      logger.error('Error loading player info:', error);
     }
   }, []);
 
@@ -161,7 +156,7 @@ const RandomMoviesScreen = ({ navigation }) => {
       const completed = await DailyChallengeService.hasCompletedToday();
       setDailyChallengeCompleted(completed);
     } catch (error) {
-      console.error('Error checking daily challenge status:', error);
+      logger.error('Error checking daily challenge status:', error);
     }
   };
 
@@ -188,7 +183,7 @@ const RandomMoviesScreen = ({ navigation }) => {
       const diff = await DifficultyService.classifyPair(mA, mB);
       setDifficulty(diff);
     } catch (error) {
-      console.error('Error classifying difficulty:', error);
+      logger.error('Error classifying difficulty:', error);
       setDifficulty(null);
     }
 
@@ -259,12 +254,6 @@ const RandomMoviesScreen = ({ navigation }) => {
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.headerButton}
-            onPress={() => setShowDeveloperSettings(true)}
-          >
-            <Text style={styles.headerButtonText}>🔧</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.headerButton}
             onPress={() => navigation.navigate('AccountOverviewScreen')}
           >
             <Text style={styles.headerButtonText}>👤</Text>
@@ -321,11 +310,6 @@ const RandomMoviesScreen = ({ navigation }) => {
           <Text style={styles.shuffleButtonText}>🎲 Shuffle</Text>
         </TouchableOpacity>
       </View>
-
-      <DeveloperSettings
-        visible={showDeveloperSettings}
-        onClose={() => setShowDeveloperSettings(false)}
-      />
 
       <PlayerStats visible={showPlayerStats} onClose={() => setShowPlayerStats(false)} />
     </ScrollView>

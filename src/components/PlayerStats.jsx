@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Modal, Alert } from 'react-native';
 import GameStatsService from '../services/GameStatsService';
+import { logger } from '../utils/constants';
 
 const PlayerStats = ({ visible, onClose }) => {
   const [stats, setStats] = useState(null);
@@ -19,7 +20,7 @@ const PlayerStats = ({ visible, onClose }) => {
 
       setStats(playerStats);
     } catch (error) {
-      console.error('Error loading stats:', error);
+      logger.error('Error loading stats:', error);
       Alert.alert('Error', 'Failed to load stats');
     } finally {
       setLoading(false);
