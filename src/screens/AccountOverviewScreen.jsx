@@ -93,6 +93,14 @@ const AccountOverviewScreen = ({ navigation }) => {
       </View>
 
       <PlayerStats visible={showPlayerStats} onClose={() => setShowPlayerStats(false)} />
+
+      {/* TMDB Attribution */}
+      <View style={styles.attribution}>
+        <Text style={styles.attributionText}>
+          This product uses the TMDB API but is not endorsed or certified by TMDB.
+        </Text>
+        <Text style={styles.attributionVersion}>CineMaze v1.0.0</Text>
+      </View>
     </ScrollView>
   );
 };
@@ -239,6 +247,25 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#2C3E50',
     textAlign: 'center',
+  },
+  attribution: {
+    marginTop: 24,
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(44, 62, 80, 0.1)',
+    alignItems: 'center',
+    width: '100%',
+  },
+  attributionText: {
+    fontSize: 11,
+    color: '#7F8C8D',
+    textAlign: 'center',
+    lineHeight: 16,
+  },
+  attributionVersion: {
+    fontSize: 11,
+    color: '#95A5A6',
+    marginTop: 6,
   },
 });
 

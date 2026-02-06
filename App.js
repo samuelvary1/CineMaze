@@ -13,107 +13,112 @@ import FavoriteActorsScreen from './src/screens/FavoriteActorsScreen';
 import ActorDetailScreen from './src/screens/ActorDetailScreen';
 import MovieDetailScreen from './src/screens/MovieDetailScreen';
 import AchievementsScreen from './src/screens/AchievementsScreen';
+import ErrorBoundary from './src/components/ErrorBoundary';
+import OfflineBanner from './src/components/OfflineBanner';
 
 const Stack = createNativeStackNavigator();
 
 export default function App() {
   return (
-    <NavigationContainer>
-      <Stack.Navigator
-        initialRouteName="RandomMoviesScreen"
-        screenOptions={{
-          headerStyle: {
-            backgroundColor: '#B8DDF0',
-          },
-          headerTintColor: '#2C3E50',
-          headerTitleStyle: {
-            fontWeight: 'bold',
-          },
-        }}
-      >
-        <Stack.Screen
-          name="RandomMoviesScreen"
-          component={RandomMoviesScreen}
-          options={{
-            title: 'CineMaze',
-            headerShown: false, // Hide header since we have custom header in component
+    <ErrorBoundary>
+      <OfflineBanner />
+      <NavigationContainer>
+        <Stack.Navigator
+          initialRouteName="RandomMoviesScreen"
+          screenOptions={{
+            headerStyle: {
+              backgroundColor: '#B8DDF0',
+            },
+            headerTintColor: '#2C3E50',
+            headerTitleStyle: {
+              fontWeight: 'bold',
+            },
           }}
-        />
-        <Stack.Screen
-          name="GameScreen"
-          component={GameScreen}
-          options={{
-            title: 'Movie Connection Game',
-            headerShown: false, // Hide header since we have custom header in component
-          }}
-        />
-        <Stack.Screen
-          name="DailyChallengeScreen"
-          component={DailyChallengeScreen}
-          options={{
-            title: 'Daily Challenge',
-            headerShown: false,
-          }}
-        />
-        <Stack.Screen
-          name="WatchlistScreen"
-          component={WatchlistScreen}
-          options={{
-            title: 'My Watchlist',
-            headerShown: false,
-          }}
-        />
-        <Stack.Screen
-          name="CompletedConnectionsScreen"
-          component={CompletedConnectionsScreen}
-          options={{ title: '', headerBackTitle: 'Back' }}
-        />
-        <Stack.Screen
-          name="ConnectionPathScreen"
-          component={ConnectionPathScreen}
-          options={{ title: 'Connection Path' }}
-        />
-        <Stack.Screen
-          name="AccountOverviewScreen"
-          component={AccountOverviewScreen}
-          options={{
-            title: 'Account',
-            headerShown: false, // Hide header since we have custom header in component
-          }}
-        />
-        <Stack.Screen
-          name="FavoriteActorsScreen"
-          component={FavoriteActorsScreen}
-          options={{
-            title: 'Favorite Actors',
-            headerShown: false,
-          }}
-        />
-        <Stack.Screen
-          name="ActorDetailScreen"
-          component={ActorDetailScreen}
-          options={{
-            title: 'Actor Details',
-            headerShown: false,
-          }}
-        />
-        <Stack.Screen
-          name="MovieDetailScreen"
-          component={MovieDetailScreen}
-          options={{
-            title: 'Movie Details',
-            headerShown: false,
-          }}
-        />
-        <Stack.Screen
-          name="AchievementsScreen"
-          component={AchievementsScreen}
-          options={{
-            title: 'Achievements',
-            headerShown: false,
-          }}
-        />
-      </Stack.Navigator>
-    </NavigationContainer>
+        >
+          <Stack.Screen
+            name="RandomMoviesScreen"
+            component={RandomMoviesScreen}
+            options={{
+              title: 'CineMaze',
+              headerShown: false, // Hide header since we have custom header in component
+            }}
+          />
+          <Stack.Screen
+            name="GameScreen"
+            component={GameScreen}
+            options={{
+              title: 'Movie Connection Game',
+              headerShown: false, // Hide header since we have custom header in component
+            }}
+          />
+          <Stack.Screen
+            name="DailyChallengeScreen"
+            component={DailyChallengeScreen}
+            options={{
+              title: 'Daily Challenge',
+              headerShown: false,
+            }}
+          />
+          <Stack.Screen
+            name="WatchlistScreen"
+            component={WatchlistScreen}
+            options={{
+              title: 'My Watchlist',
+              headerShown: false,
+            }}
+          />
+          <Stack.Screen
+            name="CompletedConnectionsScreen"
+            component={CompletedConnectionsScreen}
+            options={{ title: '', headerBackTitle: 'Back' }}
+          />
+          <Stack.Screen
+            name="ConnectionPathScreen"
+            component={ConnectionPathScreen}
+            options={{ title: 'Connection Path' }}
+          />
+          <Stack.Screen
+            name="AccountOverviewScreen"
+            component={AccountOverviewScreen}
+            options={{
+              title: 'Account',
+              headerShown: false, // Hide header since we have custom header in component
+            }}
+          />
+          <Stack.Screen
+            name="FavoriteActorsScreen"
+            component={FavoriteActorsScreen}
+            options={{
+              title: 'Favorite Actors',
+              headerShown: false,
+            }}
+          />
+          <Stack.Screen
+            name="ActorDetailScreen"
+            component={ActorDetailScreen}
+            options={{
+              title: 'Actor Details',
+              headerShown: false,
+            }}
+          />
+          <Stack.Screen
+            name="MovieDetailScreen"
+            component={MovieDetailScreen}
+            options={{
+              title: 'Movie Details',
+              headerShown: false,
+            }}
+          />
+          <Stack.Screen
+            name="AchievementsScreen"
+            component={AchievementsScreen}
+            options={{
+              title: 'Achievements',
+              headerShown: false,
+            }}
+          />
+        </Stack.Navigator>
+      </NavigationContainer>
+    </ErrorBoundary>
   );
 }
