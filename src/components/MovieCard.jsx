@@ -1,5 +1,5 @@
 import React, { memo } from 'react';
-import { View, Text, Image, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, Image, TouchableOpacity, StyleSheet } from 'react-native';
 
 const PLACEHOLDER_IMAGE = 'https://via.placeholder.com/150x225?text=No+Image';
 
@@ -10,13 +10,11 @@ const MovieCard = memo(({ movie, onAddToWatchlist }) => {
         <Image source={{ uri: movie.posterPath || PLACEHOLDER_IMAGE }} style={styles.poster} />
       </TouchableOpacity>
       <Text style={styles.movieTitle}>{movie.title}</Text>
-      <ScrollView style={styles.actorsList} showsVerticalScrollIndicator={false}>
-        {movie.actors.map((actor) => (
-          <Text key={actor.id} style={styles.actorName}>
-            {actor.name}
-          </Text>
-        ))}
-      </ScrollView>
+      {movie.actors && movie.actors.length > 0 && (
+        <View style={styles.actorBadge}>
+          <Text style={styles.actorBadgeText}>🎭 {movie.actors.length} actors</Text>
+        </View>
+      )}
     </View>
   );
 });
@@ -51,21 +49,24 @@ const styles = StyleSheet.create({
     borderBottomColor: '#CCCCCC',
   },
   movieTitle: {
-    marginTop: 8, // Reduced from 10
-    marginBottom: 4, // Add small spacing before actors list
-    fontSize: 15, // Slightly smaller
+    marginTop: 8,
+    marginBottom: 4,
+    fontSize: 15,
     fontWeight: '600',
     textAlign: 'center',
     color: '#2C3E50',
   },
-  actorsList: {
-    maxHeight: 150, // Limit height and make scrollable
-    paddingVertical: 4,
+  actorBadge: {
+    backgroundColor: 'rgba(255, 255, 255, 0.6)',
+    borderRadius: 10,
+    paddingVertical: 3,
+    paddingHorizontal: 8,
+    marginTop: 4,
   },
-  actorName: {
-    fontSize: 13, // Slightly smaller
-    color: '#555',
-    lineHeight: 16, // Tighter line spacing
+  actorBadgeText: {
+    fontSize: 12,
+    color: '#34495E',
+    fontWeight: '500',
   },
 });
 

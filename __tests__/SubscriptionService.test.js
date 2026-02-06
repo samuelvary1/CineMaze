@@ -2,85 +2,39 @@ import SubscriptionService, {
   SUBSCRIPTION_TIERS,
   FEATURES,
 } from '../src/services/SubscriptionService';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-
-// Mock AsyncStorage
-jest.mock('@react-native-async-storage/async-storage', () => ({
-  getItem: jest.fn(),
-  setItem: jest.fn(),
-  removeItem: jest.fn(),
-}));
 
 describe('SubscriptionService', () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
-    AsyncStorage.getItem.mockResolvedValue(null);
-  });
-
-  describe('subscription tiers', () => {
-    test('free user has limited plays', async () => {
-      AsyncStorage.getItem.mockResolvedValue(
-        JSON.stringify({
-          tier: SUBSCRIPTION_TIERS.FREE,
-          expiryDate: null,
-        }),
-      );
-
+  describe('all features are free', () => {
+    test('all features are always available', async () => {
       const hasWatchlist = await SubscriptionService.hasFeature(FEATURES.WATCHLIST);
-
-      expect(hasWatchlist).toBe(false);
-    });
-
-    test('premium user has unlimited access', async () => {
-      const futureDate = new Date();
-      futureDate.setMonth(futureDate.getMonth() + 1);
-
-      AsyncStorage.getItem.mockResolvedValue(
-        JSON.stringify({
-          tier: SUBSCRIPTION_TIERS.PREMIUM,
-          expiryDate: futureDate.toISOString(),
-        }),
-      );
-
       const hasUnlimited = await SubscriptionService.hasFeature(FEATURES.UNLIMITED_PLAYS);
-      const hasWatchlist = await SubscriptionService.hasFeature(FEATURES.WATCHLIST);
 
-      expect(hasUnlimited).toBe(true);
       expect(hasWatchlist).toBe(true);
+      expect(hasUnlimited).toBe(true);
     });
 
-    test('expired premium subscription reverts to free', async () => {
-      const pastDate = new Date();
-      pastDate.setMonth(pastDate.getMonth() - 1);
-
-      AsyncStorage.getItem.mockResolvedValue(
-        JSON.stringify({
-          tier: SUBSCRIPTION_TIERS.PREMIUM,
-          expiryDate: pastDate.toISOString(),
-        }),
-      );
-
+    test('subscription is always active', async () => {
       const isActive = await SubscriptionService.isSubscriptionActive();
-      expect(isActive).toBe(false);
-    });
-  });
-
-  describe('daily plays', () => {
-    test('tracks daily play count correctly', async () => {
-      AsyncStorage.getItem.mockResolvedValue('0');
-
-      await SubscriptionService.incrementDailyPlays();
-
-      expect(AsyncStorage.setItem).toHaveBeenCalledWith(expect.stringContaining('dailyPlays'), '1');
+      expect(isActive).toBe(true);
     });
 
-    test('calculates remaining plays for free users', async () => {
-      AsyncStorage.getItem
-        .mockResolvedValueOnce(JSON.stringify({ tier: SUBSCRIPTION_TIERS.FREE }))
-        .mockResolvedValueOnce('0'); // dailyPlays count
+    test('user can always play', async () => {
+      const canPlay = await SubscriptionService.canPlay();
+      expect(canPlay).toBe(true);
+    });
 
+    test('plays remaining is always Unlimited', async () => {
       const remaining = await SubscriptionService.getPlaysRemaining();
-      expect(remaining).toBe(1);
+      expect(remaining).toBe('Unlimited');
+    });
+
+    test('subscription info shows all features unlocked', async () => {
+      const info = await SubscriptionService.getSubscriptionInfo();
+      expect(info.tier).toBe(SUBSCRIPTION_TIERS.PREMIUM);
+      expect(info.isActive).toBe(true);
+      expect(info.canPlay).toBe(true);
+      expect(info.hasWatchlist).toBe(true);
+      expect(info.hasUnlimitedPlays).toBe(true);
     });
   });
 });

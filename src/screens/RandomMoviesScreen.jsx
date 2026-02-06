@@ -11,11 +11,8 @@ import {
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { TMDB_API_KEY } from '@env';
 import MoviesContainer from '../components/MoviesContainer';
-import PaywallModal from '../components/PaywallModal';
-import SubscriptionStatus from '../components/SubscriptionStatus';
 import DeveloperSettings from '../components/DeveloperSettings';
 import PlayerStats from '../components/PlayerStats';
-import SubscriptionService, { FEATURES } from '../services/SubscriptionService';
 import DailyChallengeService from '../services/DailyChallengeService';
 
 const BASE_URL = 'https://api.themoviedb.org/3';
@@ -125,25 +122,13 @@ const RandomMoviesScreen = ({ navigation }) => {
   const [movies, setMovies] = useState([]);
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
-  const [showPaywall, setShowPaywall] = useState(false);
   const [showDeveloperSettings, setShowDeveloperSettings] = useState(false);
   const [showPlayerStats, setShowPlayerStats] = useState(false);
   const [dailyChallengeCompleted, setDailyChallengeCompleted] = useState(false);
 
-  // Load subscription info on component mount
   useEffect(() => {
-    loadSubscriptionInfo();
     checkDailyChallengeStatus();
   }, []);
-
-  const loadSubscriptionInfo = async () => {
-    try {
-      const info = await SubscriptionService.getSubscriptionInfo();
-      console.log('Subscription info:', info);
-    } catch (error) {
-      console.error('Error loading subscription info:', error);
-    }
-  };
 
   const checkDailyChallengeStatus = async () => {
     try {
@@ -160,8 +145,7 @@ const RandomMoviesScreen = ({ navigation }) => {
     let mB = null;
     let tries = 0;
     while ((!mA || !mB || mA.id === mB.id) && tries < 5) {
-      mA = await fetchMovieWithActors();
-      mB = await fetchMovieWithActors();
+      [mA, mB] = await Promise.all([fetchMovieWithActors(), fetchMovieWithActors()]);
       tries++;
     }
 
@@ -182,20 +166,6 @@ const RandomMoviesScreen = ({ navigation }) => {
 
   const addToWatchlist = async (movie) => {
     try {
-      // Check if user has watchlist feature
-      const hasWatchlist = await SubscriptionService.hasFeature(FEATURES.WATCHLIST);
-      if (!hasWatchlist) {
-        Alert.alert(
-          '🔒 Premium Feature',
-          'Watchlist is available with Premium subscription. Upgrade to save your favorite movies!',
-          [
-            { text: 'Cancel', style: 'cancel' },
-            { text: 'Upgrade', onPress: () => setShowPaywall(true) },
-          ],
-        );
-        return;
-      }
-
       const jsonValue = await AsyncStorage.getItem('watchlist');
       const current = jsonValue != null ? JSON.parse(jsonValue) : [];
       const exists = current.find((m) => m.id === movie.id);
@@ -211,36 +181,13 @@ const RandomMoviesScreen = ({ navigation }) => {
     }
   };
 
-  const handleStartGame = async () => {
-    try {
-      // Check if user can play
-      const canPlay = await SubscriptionService.canPlay();
-      if (!canPlay) {
-        setShowPaywall(true);
-        return;
-      }
-
-      // Increment play count for free users
-      const hasUnlimitedPlays = await SubscriptionService.hasFeature(FEATURES.UNLIMITED_PLAYS);
-      if (!hasUnlimitedPlays) {
-        await SubscriptionService.incrementDailyPlays();
-      }
-
-      // Navigate to game
+  const handleStartGame = () => {
+    if (movies.length === 2) {
       navigation.navigate('GameScreen', {
         movieA: movies[0],
         movieB: movies[1],
       });
-    } catch (error) {
-      console.error('Error starting game:', error);
-      Alert.alert('Error', 'Failed to start game. Please try again.');
     }
-  };
-
-  const handleSubscriptionSuccess = async () => {
-    setShowPaywall(false);
-    await loadSubscriptionInfo();
-    Alert.alert('🎉 Welcome to Premium!', 'You can now start the game!');
   };
 
   if (initialLoading) {
@@ -288,8 +235,6 @@ const RandomMoviesScreen = ({ navigation }) => {
         </View>
       </View>
 
-      <SubscriptionStatus onUpgrade={() => setShowPaywall(true)} />
-
       {/* Add spacing to move movie content down */}
       <View style={styles.spacer} />
 
@@ -313,16 +258,9 @@ const RandomMoviesScreen = ({ navigation }) => {
         </TouchableOpacity>
       </View>
 
-      <PaywallModal
-        visible={showPaywall}
-        onClose={() => setShowPaywall(false)}
-        onSubscribe={handleSubscriptionSuccess}
-      />
-
       <DeveloperSettings
         visible={showDeveloperSettings}
         onClose={() => setShowDeveloperSettings(false)}
-        onSubscriptionChanged={loadSubscriptionInfo}
       />
 
       <PlayerStats visible={showPlayerStats} onClose={() => setShowPlayerStats(false)} />

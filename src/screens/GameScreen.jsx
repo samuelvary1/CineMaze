@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -16,8 +16,6 @@ import GameStatsService from '../services/GameStatsService';
 import DailyChallengeService from '../services/DailyChallengeService';
 import GameRewards from '../components/GameRewards';
 import FavoriteActorsService from '../services/FavoriteActorsService';
-import SubscriptionService, { FEATURES } from '../services/SubscriptionService';
-import PaywallModal from '../components/PaywallModal';
 
 const IMAGE_BASE = 'https://image.tmdb.org/t/p/w500';
 const PLACEHOLDER = 'https://via.placeholder.com/150x225?text=No+Image';
@@ -35,9 +33,19 @@ const GameScreen = ({ route, navigation }) => {
   const [isConnected, setIsConnected] = useState(false);
   const [showRewards, setShowRewards] = useState(false);
   const [gameRewards, setGameRewards] = useState(null);
-  const [showPaywall, setShowPaywall] = useState(false);
   const [favoriteActors, setFavoriteActors] = useState(new Set());
   const [gameStartTime] = useState(Date.now());
+  const [lastSide, setLastSide] = useState(null);
+
+  // Refs to avoid stale closure in updateSide
+  const leftPathRef = useRef(leftPath);
+  const rightPathRef = useRef(rightPath);
+  useEffect(() => {
+    leftPathRef.current = leftPath;
+  }, [leftPath]);
+  useEffect(() => {
+    rightPathRef.current = rightPath;
+  }, [rightPath]);
 
   useEffect(() => {
     loadFavoriteActors();
@@ -58,13 +66,6 @@ const GameScreen = ({ route, navigation }) => {
 
   const addActorToFavorites = async (actor) => {
     try {
-      // Check if user has premium access
-      const hasPremium = await SubscriptionService.hasFeature(FEATURES.UNLIMITED_PLAYS);
-      if (!hasPremium) {
-        setShowPaywall(true);
-        return;
-      }
-
       await FavoriteActorsService.addFavoriteActor({
         id: actor.id,
         name: actor.name,
@@ -77,11 +78,6 @@ const GameScreen = ({ route, navigation }) => {
       console.error('Error adding actor to favorites:', error);
       Alert.alert('Error', 'Failed to add actor to favorites.');
     }
-  };
-
-  const handleSubscriptionSuccess = async () => {
-    setShowPaywall(false);
-    Alert.alert('🎉 Welcome to Premium!', 'You can now add actors to favorites!');
   };
 
   const showHelpInstructions = () => {
@@ -122,6 +118,26 @@ const GameScreen = ({ route, navigation }) => {
         },
       ],
     );
+  };
+
+  const undoLastMove = () => {
+    if (moves === 0 || isConnected) {
+      return;
+    }
+
+    if (lastSide === 'A' && leftPath.length > 1) {
+      const newPath = leftPath.slice(0, -1);
+      setLeftPath(newPath);
+      setLeftNode(newPath[newPath.length - 1]);
+      setMoves((prev) => Math.max(0, prev - 1));
+      setLastSide(null);
+    } else if (lastSide === 'B' && rightPath.length > 1) {
+      const newPath = rightPath.slice(0, -1);
+      setRightPath(newPath);
+      setRightNode(newPath[newPath.length - 1]);
+      setMoves((prev) => Math.max(0, prev - 1));
+      setLastSide(null);
+    }
   };
 
   const addToWatchlist = async (movie) => {
@@ -197,13 +213,11 @@ const GameScreen = ({ route, navigation }) => {
 
   const updateSide = (side, node) => {
     const setPath = side === 'A' ? setLeftPath : setRightPath;
-    const getOtherPath = side === 'A' ? rightPath : leftPath;
+    const otherPath = side === 'A' ? rightPathRef.current : leftPathRef.current;
     setPath((prev) => {
       const newPath = [...prev, node];
 
-      const foundMatch = getOtherPath.find(
-        (n) => n.data.id === node.data.id && n.type === node.type,
-      );
+      const foundMatch = otherPath.find((n) => n.data.id === node.data.id && n.type === node.type);
       if (foundMatch && !isConnected) {
         setIsConnected(true);
         saveCompletedConnection();
@@ -216,27 +230,41 @@ const GameScreen = ({ route, navigation }) => {
   };
 
   const handleActorPress = async (actor, side) => {
-    if (isConnected) {
+    if (isConnected || loading) {
       return;
     }
     setLoading(true);
-    const actorData = await fetchActorWithFilmography(actor.id);
-    const node = { type: 'actor', data: actorData };
-    side === 'A' ? setLeftNode(node) : setRightNode(node);
-    updateSide(side, node);
-    setLoading(false);
+    try {
+      const actorData = await fetchActorWithFilmography(actor.id);
+      const node = { type: 'actor', data: actorData };
+      side === 'A' ? setLeftNode(node) : setRightNode(node);
+      updateSide(side, node);
+      setLastSide(side);
+    } catch (error) {
+      console.error('Error fetching actor:', error);
+      Alert.alert('Connection Error', 'Failed to load actor data. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleMoviePress = async (movie, side) => {
-    if (isConnected) {
+    if (isConnected || loading) {
       return;
     }
     setLoading(true);
-    const movieData = await fetchMovieWithCredits(movie.id);
-    const node = { type: 'movie', data: movieData };
-    side === 'A' ? setLeftNode(node) : setRightNode(node);
-    updateSide(side, node);
-    setLoading(false);
+    try {
+      const movieData = await fetchMovieWithCredits(movie.id);
+      const node = { type: 'movie', data: movieData };
+      side === 'A' ? setLeftNode(node) : setRightNode(node);
+      updateSide(side, node);
+      setLastSide(side);
+    } catch (error) {
+      console.error('Error fetching movie:', error);
+      Alert.alert('Connection Error', 'Failed to load movie data. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const saveCompletedConnection = async () => {
@@ -350,13 +378,44 @@ const GameScreen = ({ route, navigation }) => {
     }
   };
 
+  const renderPathBreadcrumbs = (path, side) => {
+    if (path.length <= 1) {
+      return null;
+    }
+    return (
+      <View style={styles.breadcrumbContainer}>
+        {path.slice(0, -1).map((node, index) => (
+          <Text key={`breadcrumb-${side}-${index}`} style={styles.breadcrumbText} numberOfLines={1}>
+            {index > 0 ? ' → ' : ''}
+            {node.type === 'movie' ? '🎬' : '🎭'} {node.data.title || node.data.name}
+          </Text>
+        ))}
+      </View>
+    );
+  };
+
   const renderNode = (node, side) => {
+    const sideLabel = side === 'A' ? 'Left' : 'Right';
+    const sideColor = side === 'A' ? '#3498DB' : '#E67E22';
+    const path = side === 'A' ? leftPath : rightPath;
     if (node.type === 'movie') {
       const { title, posterPath, actors } = node.data;
 
       return (
         <View key={`${side}-movie-${node.data.id}`} style={styles.nodeCard}>
-          <TouchableOpacity onPress={() => addToWatchlist(node.data)} activeOpacity={0.8}>
+          <View style={[styles.sideLabel, { backgroundColor: sideColor }]}>
+            <Text style={styles.sideLabelText}>{sideLabel} Path</Text>
+          </View>
+          {renderPathBreadcrumbs(path, side)}
+          <TouchableOpacity
+            onPress={() => {
+              Alert.alert(title, 'Add to watchlist?', [
+                { text: 'Cancel', style: 'cancel' },
+                { text: 'Add', onPress: () => addToWatchlist(node.data) },
+              ]);
+            }}
+            activeOpacity={0.8}
+          >
             <Image source={{ uri: posterPath }} style={styles.poster} />
           </TouchableOpacity>
           <Text style={styles.nodeTitle}>{title}</Text>
@@ -397,6 +456,10 @@ const GameScreen = ({ route, navigation }) => {
       const { name, profilePath, filmography } = node.data;
       return (
         <View key={`${side}-actor-${node.data.id}`} style={styles.nodeCard}>
+          <View style={[styles.sideLabel, { backgroundColor: sideColor }]}>
+            <Text style={styles.sideLabelText}>{sideLabel} Path</Text>
+          </View>
+          {renderPathBreadcrumbs(path, side)}
           <Image source={{ uri: profilePath }} style={styles.poster} />
           <Text style={styles.nodeTitle}>{name}</Text>
           <ScrollView style={styles.actorScrollView}>
@@ -433,6 +496,15 @@ const GameScreen = ({ route, navigation }) => {
           <TouchableOpacity style={styles.headerButton} onPress={showHelpInstructions}>
             <Text style={styles.headerButtonText}>❓</Text>
           </TouchableOpacity>
+          {moves > 0 && !isConnected && (
+            <TouchableOpacity
+              style={styles.headerButton}
+              onPress={undoLastMove}
+              disabled={!lastSide}
+            >
+              <Text style={[styles.headerButtonText, !lastSide && { opacity: 0.3 }]}>↩️</Text>
+            </TouchableOpacity>
+          )}
           {!isDaily && (
             <TouchableOpacity style={styles.headerButton} onPress={resetGame}>
               <Text style={styles.headerButtonText}>🔄</Text>
@@ -464,12 +536,6 @@ const GameScreen = ({ route, navigation }) => {
         visible={showRewards}
         onClose={() => setShowRewards(false)}
         rewards={gameRewards}
-      />
-
-      <PaywallModal
-        visible={showPaywall}
-        onClose={() => setShowPaywall(false)}
-        onSubscribe={handleSubscriptionSuccess}
       />
     </ScrollView>
   );
@@ -588,9 +654,36 @@ const styles = StyleSheet.create({
     gap: 16,
   },
   nodeCard: {
-    width: 150,
+    width: 165,
     alignItems: 'center',
     marginBottom: 16,
+  },
+  sideLabel: {
+    paddingVertical: 3,
+    paddingHorizontal: 10,
+    borderRadius: 8,
+    marginBottom: 6,
+  },
+  sideLabelText: {
+    color: '#FFFFFF',
+    fontSize: 11,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  breadcrumbContainer: {
+    backgroundColor: 'rgba(255, 255, 255, 0.5)',
+    borderRadius: 6,
+    paddingHorizontal: 6,
+    paddingVertical: 3,
+    marginBottom: 6,
+    width: '100%',
+    maxHeight: 40,
+  },
+  breadcrumbText: {
+    fontSize: 10,
+    color: '#34495E',
+    fontWeight: '500',
   },
   poster: {
     width: 140,

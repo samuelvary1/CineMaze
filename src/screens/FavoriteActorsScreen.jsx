@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image, Alert } from 'react-native';
 import FavoriteActorsService from '../services/FavoriteActorsService';
-import SubscriptionService, { FEATURES } from '../services/SubscriptionService';
-import PaywallModal from '../components/PaywallModal';
 
 const PLACEHOLDER_IMAGE = 'https://via.placeholder.com/150x225?text=No+Image';
 const IMAGE_BASE = 'https://image.tmdb.org/t/p/w500';
@@ -10,7 +8,6 @@ const IMAGE_BASE = 'https://image.tmdb.org/t/p/w500';
 const FavoriteActorsScreen = ({ navigation }) => {
   const [favoriteActors, setFavoriteActors] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [showPaywall, setShowPaywall] = useState(false);
 
   const getActorImageUrl = (profilePath) => {
     if (!profilePath) {
@@ -39,25 +36,12 @@ const FavoriteActorsScreen = ({ navigation }) => {
     }
   };
 
-  const handleActorPress = async (actor) => {
-    try {
-      // Check if user has premium access
-      const hasPremium = await SubscriptionService.hasFeature(FEATURES.UNLIMITED_PLAYS);
-      if (!hasPremium) {
-        setShowPaywall(true);
-        return;
-      }
-
-      // Navigate to dedicated actor page
-      navigation.navigate('ActorDetailScreen', {
-        actorId: actor.id,
-        actorName: actor.name,
-        actorProfilePath: actor.profilePath,
-      });
-    } catch (error) {
-      console.error('Error navigating to actor detail:', error);
-      Alert.alert('Error', 'Failed to open actor details.');
-    }
+  const handleActorPress = (actor) => {
+    navigation.navigate('ActorDetailScreen', {
+      actorId: actor.id,
+      actorName: actor.name,
+      actorProfilePath: actor.profilePath,
+    });
   };
 
   const handleRemoveActor = async (actorId, actorName) => {
@@ -72,11 +56,6 @@ const FavoriteActorsScreen = ({ navigation }) => {
         },
       },
     ]);
-  };
-
-  const handleSubscriptionSuccess = async () => {
-    setShowPaywall(false);
-    Alert.alert('🎉 Welcome to Premium!', 'You can now access actor details!');
   };
 
   if (loading) {
@@ -128,12 +107,6 @@ const FavoriteActorsScreen = ({ navigation }) => {
           </View>
         )}
       </ScrollView>
-
-      <PaywallModal
-        visible={showPaywall}
-        onClose={() => setShowPaywall(false)}
-        onSubscribe={handleSubscriptionSuccess}
-      />
     </View>
   );
 };

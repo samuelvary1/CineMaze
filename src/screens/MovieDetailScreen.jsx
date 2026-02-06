@@ -12,7 +12,6 @@ import {
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { TMDB_API_KEY } from '@env';
 import FavoriteActorsService from '../services/FavoriteActorsService';
-import SubscriptionService, { FEATURES } from '../services/SubscriptionService';
 
 const IMAGE_BASE = 'https://image.tmdb.org/t/p/w500';
 const PLACEHOLDER_IMAGE = 'https://via.placeholder.com/150x225?text=No+Image';
@@ -183,44 +182,16 @@ const MovieDetailScreen = ({ route, navigation }) => {
     }
   };
 
-  const handleActorPress = async (actor) => {
-    try {
-      // Check if user has premium access
-      const hasPremium = await SubscriptionService.hasFeature(FEATURES.UNLIMITED_PLAYS);
-      if (!hasPremium) {
-        Alert.alert(
-          '🔒 Premium Feature',
-          'Actor details are available with a premium subscription.',
-          [{ text: 'OK' }],
-        );
-        return;
-      }
-
-      // Navigate to actor detail screen
-      navigation.navigate('ActorDetailScreen', {
-        actorId: actor.id,
-        actorName: actor.name,
-        actorProfilePath: actor.profilePath,
-      });
-    } catch (error) {
-      console.error('Error navigating to actor detail:', error);
-      Alert.alert('Error', 'Failed to open actor details.');
-    }
+  const handleActorPress = (actor) => {
+    navigation.navigate('ActorDetailScreen', {
+      actorId: actor.id,
+      actorName: actor.name,
+      actorProfilePath: actor.profilePath,
+    });
   };
 
   const addActorToFavorites = async (actor) => {
     try {
-      // Check if user has premium access
-      const hasPremium = await SubscriptionService.hasFeature(FEATURES.UNLIMITED_PLAYS);
-      if (!hasPremium) {
-        Alert.alert(
-          '🔒 Premium Feature',
-          'Favorite actors feature is available with a premium subscription.',
-          [{ text: 'OK' }],
-        );
-        return;
-      }
-
       const success = await FavoriteActorsService.addFavoriteActor({
         id: actor.id,
         name: actor.name,

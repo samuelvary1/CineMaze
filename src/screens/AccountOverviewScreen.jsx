@@ -1,62 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
-import SubscriptionService, { FEATURES } from '../services/SubscriptionService';
-import PaywallModal from '../components/PaywallModal';
 import PlayerStats from '../components/PlayerStats';
 
 const AccountOverviewScreen = ({ navigation }) => {
-  const [showPaywall, setShowPaywall] = useState(false);
   const [showPlayerStats, setShowPlayerStats] = useState(false);
-  const [subscriptionStatus, setSubscriptionStatus] = useState(null);
-
-  useEffect(() => {
-    checkSubscriptionStatus();
-  }, []);
-
-  const checkSubscriptionStatus = async () => {
-    try {
-      const isActive = await SubscriptionService.isSubscriptionActive();
-      const tier = await SubscriptionService.getSubscriptionTier();
-      const devInfo = SubscriptionService.getDevelopmentInfo();
-
-      setSubscriptionStatus({
-        isActive,
-        tier,
-        developmentMode: devInfo.developmentMode,
-        platform: devInfo.platform,
-        productId: devInfo.productId,
-      });
-    } catch (error) {
-      console.error('Error checking subscription status:', error);
-    }
-  };
-
-  const checkPremiumAndNavigate = async (feature, screenName) => {
-    try {
-      const hasFeature = await SubscriptionService.hasFeature(feature);
-      if (hasFeature) {
-        navigation.navigate(screenName);
-      } else {
-        setShowPaywall(true);
-      }
-    } catch (error) {
-      console.error('Error checking premium status:', error);
-      navigation.navigate(screenName); // Fallback to allow navigation
-    }
-  };
-
-  const handleWatchlistPress = () => {
-    checkPremiumAndNavigate(FEATURES.WATCHLIST, 'WatchlistScreen');
-  };
-
-  const handleFavoriteActorsPress = () => {
-    checkPremiumAndNavigate(FEATURES.UNLIMITED_PLAYS, 'FavoriteActorsScreen');
-  };
-
-  const handleSubscriptionSuccess = () => {
-    setShowPaywall(false);
-    checkSubscriptionStatus(); // Refresh status after subscription
-  };
 
   return (
     <View style={styles.container}>
@@ -72,24 +19,6 @@ const AccountOverviewScreen = ({ navigation }) => {
           <Text style={styles.backToGameText}>🎮 Back</Text>
         </TouchableOpacity>
       </View>
-
-      {/* Subscription Status Indicator */}
-      {subscriptionStatus && (
-        <View style={styles.statusContainer}>
-          <Text style={styles.statusTitle}>
-            {subscriptionStatus.developmentMode ? '🔧 Development Mode' : '🚀 Production Mode'}
-          </Text>
-          <Text style={styles.statusText}>
-            Status: {subscriptionStatus.isActive ? '✅ Premium Active' : '❌ Free Tier'}
-            {subscriptionStatus.developmentMode && subscriptionStatus.isActive
-              ? ' (Simulated)'
-              : ''}
-          </Text>
-          <Text style={styles.statusDetail}>
-            Platform: {subscriptionStatus.platform} | Product: {subscriptionStatus.productId}
-          </Text>
-        </View>
-      )}
 
       {/* App Logo */}
       <View style={styles.logoImageContainer}>
@@ -119,11 +48,17 @@ const AccountOverviewScreen = ({ navigation }) => {
           <Text style={styles.buttonText}>🗓️ Daily Challenge</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.button} onPress={handleWatchlistPress}>
+        <TouchableOpacity
+          style={styles.button}
+          onPress={() => navigation.navigate('WatchlistScreen')}
+        >
           <Text style={styles.buttonText}>📋 Watchlist</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.button} onPress={handleFavoriteActorsPress}>
+        <TouchableOpacity
+          style={styles.button}
+          onPress={() => navigation.navigate('FavoriteActorsScreen')}
+        >
           <Text style={styles.buttonText}>⭐ Favorite Actors</Text>
         </TouchableOpacity>
 
@@ -145,12 +80,6 @@ const AccountOverviewScreen = ({ navigation }) => {
           <Text style={styles.buttonText}>📊 Player Stats</Text>
         </TouchableOpacity>
       </View>
-
-      <PaywallModal
-        visible={showPaywall}
-        onClose={() => setShowPaywall(false)}
-        onSubscribe={handleSubscriptionSuccess}
-      />
 
       <PlayerStats visible={showPlayerStats} onClose={() => setShowPlayerStats(false)} />
     </View>
@@ -228,33 +157,6 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 14,
     fontWeight: '600',
-    textAlign: 'center',
-  },
-  statusContainer: {
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
-    marginHorizontal: 20,
-    marginVertical: 8, // Reduced from 10
-    padding: 10, // Reduced from 12
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: '#4ECDC4',
-  },
-  statusTitle: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: '#2C3E50',
-    textAlign: 'center',
-    marginBottom: 4,
-  },
-  statusText: {
-    fontSize: 12,
-    color: '#2C3E50',
-    textAlign: 'center',
-    marginBottom: 2,
-  },
-  statusDetail: {
-    fontSize: 10,
-    color: '#7F8C8D',
     textAlign: 'center',
   },
   logoImageContainer: {
