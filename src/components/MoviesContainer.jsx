@@ -19,8 +19,10 @@ const MoviesContainer = memo(
         </View>
         {isLoading && (
           <View style={styles.loadingOverlay}>
-            <ActivityIndicator size="large" />
-            <Text style={styles.loadingText}>Loading new movies...</Text>
+            <View style={styles.loadingBox}>
+              <ActivityIndicator size="large" color="#3498DB" />
+              <Text style={styles.loadingText}>Loading...</Text>
+            </View>
           </View>
         )}
       </View>
@@ -52,11 +54,25 @@ const styles = StyleSheet.create({
     bottom: 0,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.9)', // Semi-transparent overlay
+    backgroundColor: 'rgba(184, 221, 240, 0.7)',
+  },
+  loadingBox: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    paddingVertical: 20,
+    paddingHorizontal: 28,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 6,
   },
   loadingText: {
     marginTop: 10,
-    fontSize: 16,
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#34495E',
   },
 });
 

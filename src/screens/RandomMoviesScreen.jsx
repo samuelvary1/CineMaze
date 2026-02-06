@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -14,6 +14,7 @@ import MoviesContainer from '../components/MoviesContainer';
 import DeveloperSettings from '../components/DeveloperSettings';
 import PlayerStats from '../components/PlayerStats';
 import DailyChallengeService from '../services/DailyChallengeService';
+import GameStatsService from '../services/GameStatsService';
 
 const BASE_URL = 'https://api.themoviedb.org/3';
 const IMAGE_BASE = 'https://image.tmdb.org/t/p/w500';
@@ -125,10 +126,33 @@ const RandomMoviesScreen = ({ navigation }) => {
   const [showDeveloperSettings, setShowDeveloperSettings] = useState(false);
   const [showPlayerStats, setShowPlayerStats] = useState(false);
   const [dailyChallengeCompleted, setDailyChallengeCompleted] = useState(false);
+  const [streak, setStreak] = useState(0);
+  const [playerLevel, setPlayerLevel] = useState(1);
+  const [totalWins, setTotalWins] = useState(0);
+
+  const loadPlayerInfo = useCallback(async () => {
+    try {
+      const stats = await GameStatsService.getPlayerStats();
+      setStreak(stats.currentStreak || 0);
+      setPlayerLevel(stats.level || 1);
+      setTotalWins(stats.totalWins || 0);
+    } catch (error) {
+      console.error('Error loading player info:', error);
+    }
+  }, []);
+
+  // Refresh streak + daily challenge status whenever screen is focused
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('focus', () => {
+      loadPlayerInfo();
+      checkDailyChallengeStatus();
+    });
+    return unsubscribe;
+  }, [navigation, loadPlayerInfo]);
 
   useEffect(() => {
-    checkDailyChallengeStatus();
-  }, []);
+    loadPlayerInfo();
+  }, [loadPlayerInfo]);
 
   const checkDailyChallengeStatus = async () => {
     try {
@@ -235,8 +259,27 @@ const RandomMoviesScreen = ({ navigation }) => {
         </View>
       </View>
 
-      {/* Add spacing to move movie content down */}
-      <View style={styles.spacer} />
+      {/* Player info banner */}
+      <View style={styles.playerBanner}>
+        <View style={styles.bannerItem}>
+          <Text style={styles.bannerEmoji}>🎖️</Text>
+          <Text style={styles.bannerValue}>Lvl {playerLevel}</Text>
+        </View>
+        {streak > 0 && (
+          <View style={[styles.bannerItem, styles.streakItem]}>
+            <Text style={styles.bannerEmoji}>🔥</Text>
+            <Text style={[styles.bannerValue, styles.streakValue]}>
+              {streak} day{streak !== 1 ? 's' : ''}
+            </Text>
+          </View>
+        )}
+        <View style={styles.bannerItem}>
+          <Text style={styles.bannerEmoji}>🏆</Text>
+          <Text style={styles.bannerValue}>
+            {totalWins} win{totalWins !== 1 ? 's' : ''}
+          </Text>
+        </View>
+      </View>
 
       <MoviesContainer movies={movies} onAddToWatchlist={addToWatchlist} isLoading={loading} />
 
@@ -301,34 +344,34 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   logoText: {
-    fontSize: 32,
+    fontSize: 30,
     fontWeight: '900',
     color: '#2C3E50',
     textShadowColor: 'rgba(255, 255, 255, 0.9)',
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 3,
-    letterSpacing: -0.8,
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
+    letterSpacing: -0.5,
   },
   logoAccent: {
     position: 'absolute',
-    bottom: -3,
+    bottom: -2,
     left: 0,
     right: 0,
-    height: 4,
+    height: 3,
     backgroundColor: '#4ECDC4',
-    borderRadius: 3,
+    borderRadius: 2,
     shadowColor: '#4ECDC4',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.4,
-    shadowRadius: 3,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.3,
+    shadowRadius: 2,
   },
   tagline: {
-    fontSize: 15,
-    color: '#2C3E50',
-    fontWeight: '600',
+    fontSize: 14,
+    color: '#34495E',
+    fontWeight: '500',
     fontStyle: 'italic',
-    letterSpacing: 0.5,
-    opacity: 0.9,
+    letterSpacing: 0.3,
+    opacity: 0.8,
     marginTop: 2,
   },
   headerButtons: {
@@ -455,20 +498,51 @@ const styles = StyleSheet.create({
   disabledButtonText: {
     color: '#7F8C8D',
   },
-  headerRightButton: {
-    marginRight: 15,
-  },
-  headerRightText: {
-    fontSize: 18,
-  },
   loadingText: {
     marginTop: 12,
     fontSize: 16,
     color: '#2C3E50',
     fontWeight: '500',
   },
-  spacer: {
-    height: 15,
+  // Player banner
+  playerBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.85)',
+    borderRadius: 16,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    marginBottom: 14,
+    width: '100%',
+    gap: 16,
+    shadowColor: '#2C3E50',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  bannerItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  streakItem: {
+    backgroundColor: '#FFF3E0',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 10,
+  },
+  bannerEmoji: {
+    fontSize: 16,
+  },
+  bannerValue: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#2C3E50',
+  },
+  streakValue: {
+    color: '#E65100',
   },
 });
 

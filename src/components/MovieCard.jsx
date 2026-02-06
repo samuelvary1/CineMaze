@@ -4,15 +4,22 @@ import { View, Text, Image, TouchableOpacity, StyleSheet } from 'react-native';
 const PLACEHOLDER_IMAGE = 'https://via.placeholder.com/150x225?text=No+Image';
 
 const MovieCard = memo(({ movie, onAddToWatchlist }) => {
+  const topCast = movie.actors ? movie.actors.slice(0, 3) : [];
+
   return (
     <View style={styles.movieCard}>
       <TouchableOpacity onPress={() => onAddToWatchlist(movie)} activeOpacity={0.8}>
         <Image source={{ uri: movie.posterPath || PLACEHOLDER_IMAGE }} style={styles.poster} />
       </TouchableOpacity>
       <Text style={styles.movieTitle}>{movie.title}</Text>
-      {movie.actors && movie.actors.length > 0 && (
-        <View style={styles.actorBadge}>
-          <Text style={styles.actorBadgeText}>🎭 {movie.actors.length} actors</Text>
+      {topCast.length > 0 && (
+        <View style={styles.castContainer}>
+          <Text style={styles.castLabel}>Top Cast</Text>
+          {topCast.map((actor) => (
+            <Text key={actor.id} style={styles.castName} numberOfLines={1}>
+              {actor.name}
+            </Text>
+          ))}
         </View>
       )}
     </View>
@@ -50,23 +57,30 @@ const styles = StyleSheet.create({
   },
   movieTitle: {
     marginTop: 8,
-    marginBottom: 4,
+    marginBottom: 2,
     fontSize: 15,
     fontWeight: '600',
     textAlign: 'center',
     color: '#2C3E50',
   },
-  actorBadge: {
-    backgroundColor: 'rgba(255, 255, 255, 0.6)',
-    borderRadius: 10,
-    paddingVertical: 3,
-    paddingHorizontal: 8,
+  castContainer: {
+    alignItems: 'center',
     marginTop: 4,
   },
-  actorBadgeText: {
+  castLabel: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#34495E',
+    textTransform: 'uppercase',
+    letterSpacing: 0.8,
+    opacity: 0.5,
+    marginBottom: 2,
+  },
+  castName: {
     fontSize: 12,
     color: '#34495E',
     fontWeight: '500',
+    lineHeight: 16,
   },
 });
 

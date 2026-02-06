@@ -57,17 +57,16 @@ const MovieDetailScreen = ({ route, navigation }) => {
         }
       };
 
-      // Fetch movie details
-      const movieRes = await fetch(
-        `https://api.themoviedb.org/3/movie/${movieId}?api_key=${TMDB_API_KEY}&language=en-US`,
-      );
-      const movie = await movieRes.json();
-
-      // Fetch cast
-      const creditsRes = await fetch(
-        `https://api.themoviedb.org/3/movie/${movieId}/credits?api_key=${TMDB_API_KEY}&language=en-US`,
-      );
-      const credits = await creditsRes.json();
+      // Fetch movie details and credits in parallel
+      const [movieRes, creditsRes] = await Promise.all([
+        fetch(
+          `https://api.themoviedb.org/3/movie/${movieId}?api_key=${TMDB_API_KEY}&language=en-US`,
+        ),
+        fetch(
+          `https://api.themoviedb.org/3/movie/${movieId}/credits?api_key=${TMDB_API_KEY}&language=en-US`,
+        ),
+      ]);
+      const [movie, credits] = await Promise.all([movieRes.json(), creditsRes.json()]);
 
       // Get top 10 actors
       const topActors = (credits.cast || []).slice(0, 10).map((actor) => ({
@@ -80,69 +79,11 @@ const MovieDetailScreen = ({ route, navigation }) => {
       // Get director
       const director = (credits.crew || []).find((person) => person.job === 'Director');
 
-      // Fetch streaming providers with robust deduplication
-      let streamingProviders = [];
-      try {
-        const providersRes = await fetch(
-          `https://api.themoviedb.org/3/movie/${movieId}/watch/providers?api_key=${TMDB_API_KEY}`,
-        );
-        const providersData = await providersRes.json();
-        const rawProviders = providersData.results?.US?.flatrate || [];
-
-        // Define major streaming services to include
-        const majorServices = [
-          'netflix',
-          'hulu',
-          'disney plus',
-          'disney+',
-          'hbo max',
-          'hbo',
-          'amazon prime video',
-          'prime video',
-          'paramount plus',
-          'paramount+',
-          'apple tv plus',
-          'apple tv+',
-          'peacock',
-          'showtime',
-          'starz',
-        ];
-
-        // Filter for major services only and remove duplicates
-        const uniqueNames = new Set();
-        streamingProviders = rawProviders.filter((provider) => {
-          const normalizedName = provider.provider_name.toLowerCase().trim();
-
-          // Check if it's a major service
-          const isMajorService = majorServices.some(
-            (service) => normalizedName.includes(service) || service.includes(normalizedName),
-          );
-
-          if (!isMajorService) {
-            return false; // Skip non-major services
-          }
-
-          if (uniqueNames.has(normalizedName)) {
-            return false; // Skip duplicate
-          }
-          uniqueNames.add(normalizedName);
-          return true;
-        });
-
-        console.log(
-          'Major streaming providers:',
-          streamingProviders.map((p) => p.provider_name),
-        );
-      } catch (error) {
-        console.error('Error fetching streaming providers:', error);
-      }
-
       setMovieData({
         ...movie,
         posterPath: movie.poster_path ? IMAGE_BASE + movie.poster_path : moviePosterPath,
         actors: topActors,
         director: director ? director.name : 'Unknown',
-        streamingProviders,
       });
 
       // Check favorite actors status after movie data is loaded
@@ -207,55 +148,6 @@ const MovieDetailScreen = ({ route, navigation }) => {
     }
   };
 
-  const renderStreamingService = (provider, index) => {
-    // Simple color mapping for popular services
-    const getServiceColor = (name) => {
-      const serviceName = name.toLowerCase();
-      if (serviceName.includes('netflix')) {
-        return '#E50914';
-      }
-      if (serviceName.includes('hulu')) {
-        return '#1CE783';
-      }
-      if (serviceName.includes('disney')) {
-        return '#113CCF';
-      }
-      if (serviceName.includes('hbo')) {
-        return '#6B46C1';
-      }
-      if (serviceName.includes('prime') || serviceName.includes('amazon')) {
-        return '#00A8E1';
-      }
-      if (serviceName.includes('paramount')) {
-        return '#0064FF';
-      }
-      if (serviceName.includes('apple')) {
-        return '#000000';
-      }
-      if (serviceName.includes('peacock')) {
-        return '#00B4E5';
-      }
-      if (serviceName.includes('showtime')) {
-        return '#FF0000';
-      }
-      if (serviceName.includes('starz')) {
-        return '#000000';
-      }
-      return '#6B7280'; // Default gray
-    };
-
-    const backgroundColor = getServiceColor(provider.provider_name);
-
-    return (
-      <View
-        key={`${provider.provider_id}-${index}`}
-        style={[styles.streamingBadge, { backgroundColor }]}
-      >
-        <Text style={styles.streamingName}>{provider.provider_name}</Text>
-      </View>
-    );
-  };
-
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
@@ -307,18 +199,6 @@ const MovieDetailScreen = ({ route, navigation }) => {
             </TouchableOpacity>
           </View>
         </View>
-
-        {/* Streaming Services Section */}
-        {movieData.streamingProviders && movieData.streamingProviders.length > 0 && (
-          <View style={styles.streamingSection}>
-            <Text style={styles.streamingTitle}>🎬 Available On</Text>
-            <View style={styles.streamingContainer}>
-              {movieData.streamingProviders.map((provider, index) =>
-                renderStreamingService(provider, index),
-              )}
-            </View>
-          </View>
-        )}
 
         <Text style={styles.castTitle}>🎭 Top Cast</Text>
 
@@ -507,41 +387,6 @@ const styles = StyleSheet.create({
     color: '#7F8C8D',
     fontStyle: 'italic',
     marginBottom: 12,
-  },
-  streamingSection: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 5,
-  },
-  streamingTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#2C3E50',
-    marginBottom: 12,
-    textAlign: 'center',
-  },
-  streamingContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'center',
-    gap: 8,
-  },
-  streamingBadge: {
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 16,
-    marginBottom: 8,
-  },
-  streamingName: {
-    color: '#FFFFFF',
-    fontSize: 12,
-    fontWeight: 'bold',
   },
   watchlistButton: {
     backgroundColor: '#4ECDC4',

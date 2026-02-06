@@ -14,11 +14,10 @@ import { TMDB_API_KEY } from '@env';
 import uuid from 'react-native-uuid';
 import GameStatsService from '../services/GameStatsService';
 import DailyChallengeService from '../services/DailyChallengeService';
-import GameRewards from '../components/GameRewards';
+import GameSummaryCard from '../components/GameSummaryCard';
 import FavoriteActorsService from '../services/FavoriteActorsService';
 
 const IMAGE_BASE = 'https://image.tmdb.org/t/p/w500';
-const PLACEHOLDER = 'https://via.placeholder.com/150x225?text=No+Image';
 const PLACEHOLDER_IMAGE = 'https://via.placeholder.com/150x225?text=No+Image';
 
 const GameScreen = ({ route, navigation }) => {
@@ -31,8 +30,8 @@ const GameScreen = ({ route, navigation }) => {
   const [moves, setMoves] = useState(0);
   const [loading, setLoading] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
-  const [showRewards, setShowRewards] = useState(false);
-  const [gameRewards, setGameRewards] = useState(null);
+  const [showSummary, setShowSummary] = useState(false);
+  const [summaryData, setSummaryData] = useState(null);
   const [favoriteActors, setFavoriteActors] = useState(new Set());
   const [gameStartTime] = useState(Date.now());
   const [lastSide, setLastSide] = useState(null);
@@ -158,15 +157,13 @@ const GameScreen = ({ route, navigation }) => {
   };
 
   const fetchMovieWithCredits = async (movieId) => {
-    const movieRes = await fetch(
-      `https://api.themoviedb.org/3/movie/${movieId}?api_key=${TMDB_API_KEY}&language=en-US`,
-    );
-    const movieData = await movieRes.json();
-
-    const creditsRes = await fetch(
-      `https://api.themoviedb.org/3/movie/${movieId}/credits?api_key=${TMDB_API_KEY}&language=en-US`,
-    );
-    const credits = await creditsRes.json();
+    const [movieRes, creditsRes] = await Promise.all([
+      fetch(`https://api.themoviedb.org/3/movie/${movieId}?api_key=${TMDB_API_KEY}&language=en-US`),
+      fetch(
+        `https://api.themoviedb.org/3/movie/${movieId}/credits?api_key=${TMDB_API_KEY}&language=en-US`,
+      ),
+    ]);
+    const [movieData, credits] = await Promise.all([movieRes.json(), creditsRes.json()]);
 
     const topActors = (credits.cast || []).slice(0, 10).map((actor) => ({
       id: actor.id,
@@ -177,21 +174,21 @@ const GameScreen = ({ route, navigation }) => {
     return {
       id: movieData.id,
       title: movieData.title,
-      posterPath: movieData.poster_path ? IMAGE_BASE + movieData.poster_path : PLACEHOLDER,
+      posterPath: movieData.poster_path ? IMAGE_BASE + movieData.poster_path : PLACEHOLDER_IMAGE,
       actors: topActors,
     };
   };
 
   const fetchActorWithFilmography = async (actorId) => {
-    const actorRes = await fetch(
-      `https://api.themoviedb.org/3/person/${actorId}?api_key=${TMDB_API_KEY}&language=en-US`,
-    );
-    const actorData = await actorRes.json();
-
-    const creditsRes = await fetch(
-      `https://api.themoviedb.org/3/person/${actorId}/movie_credits?api_key=${TMDB_API_KEY}&language=en-US`,
-    );
-    const credits = await creditsRes.json();
+    const [actorRes, creditsRes] = await Promise.all([
+      fetch(
+        `https://api.themoviedb.org/3/person/${actorId}?api_key=${TMDB_API_KEY}&language=en-US`,
+      ),
+      fetch(
+        `https://api.themoviedb.org/3/person/${actorId}/movie_credits?api_key=${TMDB_API_KEY}&language=en-US`,
+      ),
+    ]);
+    const [actorData, credits] = await Promise.all([actorRes.json(), creditsRes.json()]);
 
     const filmography = (credits.cast || [])
       .filter((m) => m.release_date)
@@ -206,7 +203,7 @@ const GameScreen = ({ route, navigation }) => {
     return {
       id: actorData.id,
       name: actorData.name,
-      profilePath: actorData.profile_path ? IMAGE_BASE + actorData.profile_path : PLACEHOLDER,
+      profilePath: actorData.profile_path ? IMAGE_BASE + actorData.profile_path : PLACEHOLDER_IMAGE,
       filmography,
     };
   };
@@ -220,8 +217,10 @@ const GameScreen = ({ route, navigation }) => {
       const foundMatch = otherPath.find((n) => n.data.id === node.data.id && n.type === node.type);
       if (foundMatch && !isConnected) {
         setIsConnected(true);
-        saveCompletedConnection();
-        handleGameComplete(moves + 1);
+        const currentLeft = side === 'A' ? newPath : leftPathRef.current;
+        const currentRight = side === 'A' ? rightPathRef.current : newPath;
+        saveCompletedConnection(currentLeft, currentRight);
+        handleGameComplete(moves + 1, currentLeft, currentRight);
       }
 
       return newPath;
@@ -267,13 +266,15 @@ const GameScreen = ({ route, navigation }) => {
     }
   };
 
-  const saveCompletedConnection = async () => {
+  const saveCompletedConnection = async (currentLeft, currentRight) => {
     try {
+      const lp = currentLeft || leftPath;
+      const rp = currentRight || rightPath;
       const newConnection = {
         id: uuid.v4(),
         start: movieA,
         target: movieB,
-        path: [...leftPath, ...rightPath.slice(1).reverse()],
+        path: [...lp, ...rp.slice(1).reverse()],
         moves: moves + 1,
         timestamp: new Date().toISOString(),
       };
@@ -288,21 +289,23 @@ const GameScreen = ({ route, navigation }) => {
     }
   };
 
-  const handleGameComplete = async (finalMoves) => {
+  const handleGameComplete = async (finalMoves, currentLeft, currentRight) => {
     try {
       const gameEndTime = Date.now();
-      const timeTaken = Math.floor((gameEndTime - gameStartTime) / 1000); // seconds
+      const timeTaken = Math.floor((gameEndTime - gameStartTime) / 1000);
+
+      const lp = currentLeft || leftPath;
+      const rp = currentRight || rightPath;
 
       // Collect all actors and movies from the paths
       const allActors = [];
       const allMovies = [];
 
-      [...leftPath, ...rightPath].forEach((pathNode) => {
+      [...lp, ...rp].forEach((pathNode) => {
         if (pathNode.type === 'actor') {
           allActors.push(pathNode.data);
         } else if (pathNode.type === 'movie') {
           allMovies.push(pathNode.data);
-          // Add actors from the movie
           if (pathNode.data.actors) {
             allActors.push(...pathNode.data.actors);
           }
@@ -317,63 +320,31 @@ const GameScreen = ({ route, navigation }) => {
         isWin: true,
       });
 
-      // Handle daily challenge completion
+      // Handle daily challenge submission (non-blocking)
       if (isDaily && challengeId) {
         try {
-          await DailyChallengeService.submitResult(finalMoves, timeTaken, [
-            ...leftPath,
-            ...rightPath,
-          ]);
-
-          // Show daily challenge specific alert
-          Alert.alert(
-            '🏆 Daily Challenge Complete!',
-            `You solved today's challenge in ${finalMoves} moves!\nTime: ${Math.floor(
-              timeTaken / 60,
-            )}m ${timeTaken % 60}s`,
-            [
-              {
-                text: 'View Leaderboard',
-                onPress: () => navigation.navigate('DailyChallengeScreen'),
-              },
-              { text: 'Continue', style: 'cancel' },
-            ],
-          );
-          return;
+          await DailyChallengeService.submitResult(finalMoves, timeTaken, [...lp, ...rp]);
         } catch (dailyError) {
           console.error('Error submitting daily challenge result:', dailyError);
-          // Fall through to regular completion handling
         }
       }
 
-      // Prepare rewards data for regular games
-      const rewardsData = {
+      // Show summary card with all data
+      setSummaryData({
         moves: finalMoves,
+        timeTaken,
+        leftPath: lp,
+        rightPath: rp,
+        movieA,
+        movieB,
         expGained: result.expGained,
         stats: result.stats,
-        achievements: result.newAchievements,
-      };
-
-      // Check for level up
-      if (result.newAchievements?.some((a) => a.id === 'level_up')) {
-        rewardsData.levelUp = true;
-        rewardsData.newLevel = result.stats.level;
-      }
-
-      // Show standard win alert
-      Alert.alert('🎉 You Win!', `You connected both sides in ${finalMoves} moves!`, [
-        {
-          text: 'View Rewards',
-          onPress: () => {
-            setGameRewards(rewardsData);
-            setShowRewards(true);
-          },
-        },
-        { text: 'Continue', style: 'cancel' },
-      ]);
+        newAchievements: result.newAchievements,
+        isDaily,
+      });
+      setShowSummary(true);
     } catch (error) {
       console.error('Error handling game completion:', error);
-      // Fallback to simple alert
       Alert.alert('🎉 You Win!', `You connected both sides in ${finalMoves} moves!`);
     }
   };
@@ -470,7 +441,8 @@ const GameScreen = ({ route, navigation }) => {
                 style={styles.clickableItem}
               >
                 <Text style={styles.linkText}>
-                  {movie.title} ({movie.release_date.slice(0, 4)})
+                  {movie.title}
+                  {movie.release_date ? ` (${movie.release_date.slice(0, 4)})` : ''}
                 </Text>
               </TouchableOpacity>
             ))}
@@ -525,18 +497,29 @@ const GameScreen = ({ route, navigation }) => {
       <Text style={styles.moves}>Moves: {moves}</Text>
       {isConnected && <Text style={styles.win}>✅ You've connected the movies!</Text>}
 
-      {loading && <ActivityIndicator size="large" style={styles.loadingIndicator} />}
-
       <View style={styles.nodeRow}>
         {renderNode(leftNode, 'A')}
         {renderNode(rightNode, 'B')}
       </View>
 
-      <GameRewards
-        visible={showRewards}
-        onClose={() => setShowRewards(false)}
-        rewards={gameRewards}
+      <GameSummaryCard
+        visible={showSummary}
+        onClose={() => setShowSummary(false)}
+        onHome={() => {
+          setShowSummary(false);
+          navigation.navigate('RandomMoviesScreen');
+        }}
+        gameData={summaryData}
       />
+
+      {loading && (
+        <View style={styles.loadingOverlay}>
+          <View style={styles.loadingBox}>
+            <ActivityIndicator size="large" color="#3498DB" />
+            <Text style={styles.loadingText}>Loading...</Text>
+          </View>
+        </View>
+      )}
     </ScrollView>
   );
 };
@@ -567,10 +550,10 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   logoText: {
-    fontSize: 28,
-    fontWeight: '800',
+    fontSize: 30,
+    fontWeight: '900',
     color: '#2C3E50',
-    textShadowColor: 'rgba(255, 255, 255, 0.8)',
+    textShadowColor: 'rgba(255, 255, 255, 0.9)',
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 2,
     letterSpacing: -0.5,
@@ -714,12 +697,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     color: '#2C3E50',
   },
-  subTitle: {
-    marginTop: 6,
-    fontWeight: 'bold',
-    fontSize: 13,
-    color: '#34495E',
-  },
   linkText: {
     color: '#3498DB',
     marginTop: 2,
@@ -737,8 +714,34 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     flex: 1,
   },
-  loadingIndicator: {
-    marginVertical: 16,
+  loadingOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(184, 221, 240, 0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 10,
+  },
+  loadingBox: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    paddingVertical: 20,
+    paddingHorizontal: 28,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 6,
+  },
+  loadingText: {
+    marginTop: 10,
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#34495E',
   },
   actorScrollView: {
     maxHeight: 300, // Increased from 200 to show more movies
