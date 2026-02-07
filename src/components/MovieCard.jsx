@@ -1,7 +1,6 @@
 import React, { memo } from 'react';
 import { View, Text, Image, TouchableOpacity, StyleSheet } from 'react-native';
-
-const PLACEHOLDER_IMAGE = 'https://via.placeholder.com/150x225?text=No+Image';
+import { PLACEHOLDER_IMAGE } from '../utils/constants';
 
 const MovieCard = memo(({ movie, onMoviePress }) => {
   const topCast = movie.actors ? movie.actors.slice(0, 3) : [];

@@ -1,4 +1,7 @@
 {
   "name": "CineMaze",
-  "displayName": "CineMaze"
+  "displayName": "CineMaze",
+  "version": "1.0.0",
+  "description": "Connect movies through shared actors in this cinematic puzzle game",
+  "scheme": "cinemaze"
 }

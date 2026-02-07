@@ -2,8 +2,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
-const PLACEHOLDER = 'https://via.placeholder.com/150x225?text=No+Image';
+import { PLACEHOLDER_IMAGE } from '../utils/constants';
 
 const WatchlistScreen = ({ navigation }) => {
   const [watchlist, setWatchlist] = useState([]);
@@ -119,7 +118,7 @@ const WatchlistScreen = ({ navigation }) => {
                 >
                   <View>
                     <Image
-                      source={{ uri: movie.posterPath || PLACEHOLDER }}
+                      source={{ uri: movie.posterPath || PLACEHOLDER_IMAGE }}
                       style={[styles.poster, movie.watched && styles.posterWatched]}
                     />
                     {movie.watched && (

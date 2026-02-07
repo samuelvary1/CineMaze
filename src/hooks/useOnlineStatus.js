@@ -11,7 +11,7 @@ const useOnlineStatus = (checkInterval = 15000) => {
     try {
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), 5000);
-      await fetch('https://api.themoviedb.org/3/configuration?api_key=test', {
+      await fetch('https://clients3.google.com/generate_204', {
         method: 'HEAD',
         signal: controller.signal,
       });
