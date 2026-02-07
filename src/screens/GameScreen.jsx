@@ -465,13 +465,9 @@ const GameScreen = ({ route, navigation }) => {
       {/* Top bar */}
       <View style={styles.topBar}>
         <Text style={styles.topBarTitle}>CineMaze</Text>
-        <View style={{ alignItems: 'flex-end' }}>
+        <View style={styles.topBarRight}>
           <Text style={styles.moveBadge}>Moves: {moves}</Text>
-          {previousBest && (
-            <Text style={{ fontSize: 10, color: '#7F8C8D', marginTop: 2 }}>
-              Best: {previousBest}
-            </Text>
-          )}
+          {previousBest && <Text style={styles.previousBestText}>Best: {previousBest}</Text>}
         </View>
       </View>
 
@@ -613,6 +609,9 @@ const styles = StyleSheet.create({
     color: '#2C3E50',
     letterSpacing: -0.5,
   },
+  topBarRight: {
+    alignItems: 'flex-end',
+  },
   moveBadge: {
     fontSize: 14,
     fontWeight: '700',
@@ -622,6 +621,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 4,
     overflow: 'hidden',
+  },
+  previousBestText: {
+    fontSize: 10,
+    color: '#7F8C8D',
+    marginTop: 2,
   },
   goalCard: {
     flexDirection: 'row',
