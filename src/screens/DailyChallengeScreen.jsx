@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import DailyChallengeService from '../services/DailyChallengeService';
 import MoviesContainer from '../components/MoviesContainer';
+import MovieInfoModal from '../components/MovieInfoModal';
 import { formatTime, logger } from '../utils/constants';
 
 const DailyChallengeScreen = ({ navigation }) => {
@@ -21,6 +22,7 @@ const DailyChallengeScreen = ({ navigation }) => {
   const [userStats, setUserStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showStatsModal, setShowStatsModal] = useState(false);
+  const [selectedMovie, setSelectedMovie] = useState(null);
 
   useEffect(() => {
     loadDailyChallenge();
@@ -135,7 +137,7 @@ const DailyChallengeScreen = ({ navigation }) => {
 
             <MoviesContainer
               movies={[todaysChallenge.movieA, todaysChallenge.movieB]}
-              onAddToWatchlist={() => {}}
+              onMoviePress={(movie) => setSelectedMovie(movie)}
               isLoading={false}
               isDailyChallenge={true}
             />
@@ -245,6 +247,14 @@ const DailyChallengeScreen = ({ navigation }) => {
           )}
         </View>
       </Modal>
+
+      <MovieInfoModal
+        visible={!!selectedMovie}
+        movieId={selectedMovie?.id}
+        movieTitle={selectedMovie?.title}
+        moviePosterPath={selectedMovie?.posterPath}
+        onClose={() => setSelectedMovie(null)}
+      />
     </>
   );
 };

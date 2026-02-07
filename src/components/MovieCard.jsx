@@ -3,12 +3,12 @@ import { View, Text, Image, TouchableOpacity, StyleSheet } from 'react-native';
 
 const PLACEHOLDER_IMAGE = 'https://via.placeholder.com/150x225?text=No+Image';
 
-const MovieCard = memo(({ movie, onAddToWatchlist }) => {
+const MovieCard = memo(({ movie, onMoviePress }) => {
   const topCast = movie.actors ? movie.actors.slice(0, 3) : [];
 
   return (
     <View style={styles.movieCard}>
-      <TouchableOpacity onPress={() => onAddToWatchlist(movie)} activeOpacity={0.8}>
+      <TouchableOpacity onPress={() => onMoviePress(movie)} activeOpacity={0.8}>
         <Image source={{ uri: movie.posterPath || PLACEHOLDER_IMAGE }} style={styles.poster} />
       </TouchableOpacity>
       <Text style={styles.movieTitle}>{movie.title}</Text>

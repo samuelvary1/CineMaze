@@ -2,33 +2,31 @@ import React, { memo } from 'react';
 import { View, StyleSheet, ActivityIndicator, Text } from 'react-native';
 import MovieCard from './MovieCard';
 
-const MoviesContainer = memo(
-  ({ movies, onAddToWatchlist, isLoading, isDailyChallenge = false }) => {
-    return (
-      <View style={styles.containerWrapper}>
-        <View style={styles.movieContainer}>
-          {!isLoading && movies && movies.length === 2
-            ? movies.map((movie, index) => (
-                <MovieCard
-                  key={`${movie.id}-${index}-${Date.now()}`}
-                  movie={movie}
-                  onAddToWatchlist={onAddToWatchlist}
-                />
-              ))
-            : null}
-        </View>
-        {isLoading && (
-          <View style={styles.loadingOverlay}>
-            <View style={styles.loadingBox}>
-              <ActivityIndicator size="large" color="#3498DB" />
-              <Text style={styles.loadingText}>Loading...</Text>
-            </View>
-          </View>
-        )}
+const MoviesContainer = memo(({ movies, onMoviePress, isLoading, isDailyChallenge = false }) => {
+  return (
+    <View style={styles.containerWrapper}>
+      <View style={styles.movieContainer}>
+        {!isLoading && movies && movies.length === 2
+          ? movies.map((movie, index) => (
+              <MovieCard
+                key={`${movie.id}-${index}-${Date.now()}`}
+                movie={movie}
+                onMoviePress={onMoviePress}
+              />
+            ))
+          : null}
       </View>
-    );
-  },
-);
+      {isLoading && (
+        <View style={styles.loadingOverlay}>
+          <View style={styles.loadingBox}>
+            <ActivityIndicator size="large" color="#3498DB" />
+            <Text style={styles.loadingText}>Loading...</Text>
+          </View>
+        </View>
+      )}
+    </View>
+  );
+});
 
 MoviesContainer.displayName = 'MoviesContainer';
 

@@ -9,9 +9,9 @@ import {
   TouchableOpacity,
   Linking,
 } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { TMDB_API_KEY } from '@env';
 import MoviesContainer from '../components/MoviesContainer';
+import MovieInfoModal from '../components/MovieInfoModal';
 import PlayerStats from '../components/PlayerStats';
 import DailyChallengeService from '../services/DailyChallengeService';
 import GameStatsService from '../services/GameStatsService';
@@ -110,6 +110,8 @@ const fetchMovieWithActors = async () => {
         ? IMAGE_BASE + randomMovie.poster_path
         : PLACEHOLDER_IMAGE,
       actors: topActors,
+      popularity: randomMovie.popularity || 0,
+      voteCount: randomMovie.vote_count || 0,
     };
   } catch (err) {
     logger.warn('Fetch failed:', err.message);
@@ -127,6 +129,7 @@ const RandomMoviesScreen = ({ navigation }) => {
   const [playerLevel, setPlayerLevel] = useState(1);
   const [totalWins, setTotalWins] = useState(0);
   const [difficulty, setDifficulty] = useState(null);
+  const [selectedMovie, setSelectedMovie] = useState(null);
 
   const loadPlayerInfo = useCallback(async () => {
     try {
@@ -196,21 +199,8 @@ const RandomMoviesScreen = ({ navigation }) => {
     fetchTwoMovies();
   }, []);
 
-  const addToWatchlist = async (movie) => {
-    try {
-      const jsonValue = await AsyncStorage.getItem('watchlist');
-      const current = jsonValue != null ? JSON.parse(jsonValue) : [];
-      const exists = current.find((m) => m.id === movie.id);
-      if (!exists) {
-        const updated = [...current, movie];
-        await AsyncStorage.setItem('watchlist', JSON.stringify(updated));
-        Alert.alert('✅ Added to Watchlist', movie.title);
-      } else {
-        Alert.alert('ℹ️ Already in Watchlist', movie.title);
-      }
-    } catch (e) {
-      Alert.alert('Error', 'Failed to update watchlist.');
-    }
+  const handleMoviePosterPress = (movie) => {
+    setSelectedMovie(movie);
   };
 
   const handleStartGame = () => {
@@ -284,7 +274,7 @@ const RandomMoviesScreen = ({ navigation }) => {
         </View>
       </View>
 
-      <MoviesContainer movies={movies} onAddToWatchlist={addToWatchlist} isLoading={loading} />
+      <MoviesContainer movies={movies} onMoviePress={handleMoviePosterPress} isLoading={loading} />
 
       {difficulty && !loading && movies.length === 2 && (
         <View style={[styles.difficultyBadge, { backgroundColor: difficulty.color }]}>
@@ -322,6 +312,14 @@ const RandomMoviesScreen = ({ navigation }) => {
       </TouchableOpacity>
 
       <PlayerStats visible={showPlayerStats} onClose={() => setShowPlayerStats(false)} />
+
+      <MovieInfoModal
+        visible={!!selectedMovie}
+        movieId={selectedMovie?.id}
+        movieTitle={selectedMovie?.title}
+        moviePosterPath={selectedMovie?.posterPath}
+        onClose={() => setSelectedMovie(null)}
+      />
     </ScrollView>
   );
 };

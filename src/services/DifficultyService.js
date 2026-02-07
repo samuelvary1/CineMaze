@@ -1,5 +1,4 @@
-import { TMDB_API_KEY } from '@env';
-import { BASE_URL, logger } from '../utils/constants';
+import { logger } from '../utils/constants';
 
 /**
  * Difficulty levels with XP multipliers and display info.
@@ -11,7 +10,7 @@ export const DIFFICULTY = {
     emoji: '🟢',
     color: '#27AE60',
     xpMultiplier: 1.0,
-    description: 'These actors are in lots of movies together',
+    description: 'Well-known blockbusters — lots of connection paths',
   },
   MEDIUM: {
     key: 'medium',
@@ -19,7 +18,7 @@ export const DIFFICULTY = {
     emoji: '🟡',
     color: '#F39C12',
     xpMultiplier: 1.5,
-    description: 'A moderate challenge — think a few steps ahead',
+    description: 'A solid challenge — think a few steps ahead',
   },
   HARD: {
     key: 'hard',
@@ -27,81 +26,44 @@ export const DIFFICULTY = {
     emoji: '🔴',
     color: '#E74C3C',
     xpMultiplier: 2.5,
-    description: 'Deep movie knowledge required',
+    description: 'Tough pairing — deep film knowledge helps',
   },
 };
 
 /**
- * Classify the difficulty of a movie pair based on how many actors they share.
+ * Classify difficulty using weighted randomness.
  *
- * Logic:
- * - Fetch the full cast for both movies
- * - Count how many actors appear in both casts (direct shared actors)
- * - If ≥3 shared actors → EASY (they're clearly connected)
- * - If 1–2 shared actors → MEDIUM (a direct link exists but it's not obvious)
- * - If 0 shared actors → HARD (requires multiple hops through intermediary movies)
+ * Target distribution: ~45% Easy, ~35% Medium, ~20% Hard
  *
- * Falls back to a heuristic based on movie popularity if API calls fail.
+ * The random roll is nudged by how many actors the movies have loaded —
+ * movies with fewer recognized actors (less data from TMDB) are slightly
+ * more likely to land on harder difficulties.
  */
 const classifyPair = async (movieA, movieB) => {
   try {
-    // Fetch full cast for both movies
-    const [castA, castB] = await Promise.all([fetchFullCast(movieA.id), fetchFullCast(movieB.id)]);
+    // Count how many actors we got for each movie (max 10 each)
+    const actorCount = (movieA.actors || []).length + (movieB.actors || []).length;
 
-    if (!castA || !castB) {
-      return classifyByPopularity(movieA, movieB);
-    }
+    // Nudge: fewer actors = slightly harder. Range: 0-20 actors total.
+    // With 20 actors: nudge = 0 (no penalty)
+    // With 10 actors: nudge = -0.05 (slight push toward harder)
+    // With 0 actors:  nudge = -0.10
+    const nudge = (actorCount - 20) / 200;
 
-    // Count shared actors (actors who appear in both movies)
-    const actorIdsA = new Set(castA.map((a) => a.id));
-    const sharedCount = castB.filter((a) => actorIdsA.has(a.id)).length;
+    const roll = Math.random() + nudge;
 
-    if (sharedCount >= 3) {
+    // ~45% Easy, ~35% Medium, ~20% Hard
+    if (roll >= 0.55) {
       return DIFFICULTY.EASY;
     }
-    if (sharedCount >= 1) {
+    if (roll >= 0.2) {
       return DIFFICULTY.MEDIUM;
     }
     return DIFFICULTY.HARD;
   } catch (error) {
     logger.error('Error classifying difficulty:', error);
-    return classifyByPopularity(movieA, movieB);
-  }
-};
-
-/**
- * Fetch the full cast list for a movie (top 50 billed actors).
- */
-const fetchFullCast = async (movieId) => {
-  try {
-    const res = await fetch(`${BASE_URL}/movie/${movieId}/credits?api_key=${TMDB_API_KEY}`);
-    const data = await res.json();
-    // Take top 50 — enough to find connections without being too broad
-    return Array.isArray(data.cast) ? data.cast.slice(0, 50) : null;
-  } catch (error) {
-    logger.error('Error fetching cast:', error);
-    return null;
-  }
-};
-
-/**
- * Fallback: classify based on the actors passed in with the movie data.
- * If movies share actors from their top-10 cast, it's easier.
- */
-const classifyByPopularity = (movieA, movieB) => {
-  const actorsA = movieA.actors || [];
-  const actorsB = movieB.actors || [];
-
-  const idsA = new Set(actorsA.map((a) => a.id));
-  const sharedCount = actorsB.filter((a) => idsA.has(a.id)).length;
-
-  if (sharedCount >= 2) {
-    return DIFFICULTY.EASY;
-  }
-  if (sharedCount >= 1) {
     return DIFFICULTY.MEDIUM;
   }
-  return DIFFICULTY.HARD;
 };
 
 /**

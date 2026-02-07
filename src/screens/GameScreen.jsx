@@ -16,6 +16,8 @@ import DailyChallengeService from '../services/DailyChallengeService';
 import GameSummaryCard from '../components/GameSummaryCard';
 import PathMapModal from '../components/PathMapModal';
 import FavoriteActorsService from '../services/FavoriteActorsService';
+import MovieInfoModal from '../components/MovieInfoModal';
+import ActorInfoModal from '../components/ActorInfoModal';
 import { IMAGE_BASE, PLACEHOLDER_IMAGE, logger } from '../utils/constants';
 
 const GameScreen = ({ route, navigation }) => {
@@ -41,6 +43,8 @@ const GameScreen = ({ route, navigation }) => {
   const [gameStartTime] = useState(Date.now());
   const [lastSide, setLastSide] = useState(null);
   const [showPathMap, setShowPathMap] = useState(false);
+  const [selectedMovie, setSelectedMovie] = useState(null);
+  const [selectedActor, setSelectedActor] = useState(null);
 
   // Refs to avoid stale closure in updateSide
   const leftPathRef = useRef(leftPath);
@@ -69,19 +73,21 @@ const GameScreen = ({ route, navigation }) => {
     }
   };
 
-  const addActorToFavorites = async (actor) => {
+  const toggleActorFavorite = async (actor) => {
     try {
-      await FavoriteActorsService.addFavoriteActor({
-        id: actor.id,
-        name: actor.name,
-        profilePath: actor.profilePath ? IMAGE_BASE + actor.profilePath : PLACEHOLDER_IMAGE,
-      });
-
-      // Refresh favorite actors list
+      const isFav = favoriteActors.has(actor.id);
+      if (isFav) {
+        await FavoriteActorsService.removeFavoriteActor(actor.id);
+      } else {
+        await FavoriteActorsService.addFavoriteActor({
+          id: actor.id,
+          name: actor.name,
+          profilePath: actor.profilePath ? IMAGE_BASE + actor.profilePath : PLACEHOLDER_IMAGE,
+        });
+      }
       await loadFavoriteActors();
     } catch (error) {
-      logger.error('Error adding actor to favorites:', error);
-      Alert.alert('Error', 'Failed to add actor to favorites.');
+      logger.error('Error toggling actor favorite:', error);
     }
   };
 
@@ -89,11 +95,12 @@ const GameScreen = ({ route, navigation }) => {
     Alert.alert(
       '🎮 How to Play',
       'Connect two movies by finding actors they share!\n\n' +
-        '• Tap an actor to see their movies\n' +
+        "• Tap an actor's name to see their movies\n" +
         '• Tap a movie to see its actors\n' +
         '• Build a path from one side to the other\n' +
         '• Try to solve it in the fewest moves possible!\n\n' +
-        '⭐ Tap the star next to actors to add them to favorites',
+        "⭐ Tap an actor's photo to add or remove them from favorites\n" +
+        '🟡 Gold border = favorited',
       [{ text: 'Got it!', style: 'default' }],
     );
   };
@@ -142,23 +149,6 @@ const GameScreen = ({ route, navigation }) => {
       setRightNode(newPath[newPath.length - 1]);
       setMoves((prev) => Math.max(0, prev - 1));
       setLastSide(null);
-    }
-  };
-
-  const addToWatchlist = async (movie) => {
-    try {
-      const jsonValue = await AsyncStorage.getItem('watchlist');
-      const current = jsonValue != null ? JSON.parse(jsonValue) : [];
-      const exists = current.find((m) => m.id === movie.id);
-      if (!exists) {
-        const updated = [...current, movie];
-        await AsyncStorage.setItem('watchlist', JSON.stringify(updated));
-        Alert.alert('✅ Added to Watchlist', movie.title);
-      } else {
-        Alert.alert('ℹ️ Already in Watchlist', movie.title);
-      }
-    } catch (e) {
-      Alert.alert('Error', 'Failed to update watchlist.');
     }
   };
 
@@ -389,15 +379,7 @@ const GameScreen = ({ route, navigation }) => {
           <View style={[styles.sideLabel, { backgroundColor: sideColor }]}>
             <Text style={styles.sideLabelText}>{sideLabel} Path</Text>
           </View>
-          <TouchableOpacity
-            onPress={() => {
-              Alert.alert(title, 'Add to watchlist?', [
-                { text: 'Cancel', style: 'cancel' },
-                { text: 'Add', onPress: () => addToWatchlist(node.data) },
-              ]);
-            }}
-            activeOpacity={0.8}
-          >
+          <TouchableOpacity onPress={() => setSelectedMovie(node.data)} activeOpacity={0.8}>
             <Image source={{ uri: posterPath }} style={styles.poster} />
           </TouchableOpacity>
           <Text style={styles.nodeTitle}>{title}</Text>
@@ -406,7 +388,7 @@ const GameScreen = ({ route, navigation }) => {
               const isFavorited = favoriteActors.has(actor.id);
               return (
                 <View key={`${side}-actor-${actor.id}-${index}`} style={styles.actorItem}>
-                  <TouchableOpacity onPress={() => addActorToFavorites(actor)} activeOpacity={0.7}>
+                  <TouchableOpacity onPress={() => toggleActorFavorite(actor)} activeOpacity={0.7}>
                     <Image
                       source={{
                         uri: actor.profilePath
@@ -445,7 +427,7 @@ const GameScreen = ({ route, navigation }) => {
           <View style={[styles.sideLabel, { backgroundColor: sideColor }]}>
             <Text style={styles.sideLabelText}>{sideLabel} Path</Text>
           </View>
-          <TouchableOpacity onPress={() => addActorToFavorites(node.data)} activeOpacity={0.8}>
+          <TouchableOpacity onPress={() => setSelectedActor(node.data)} activeOpacity={0.8}>
             <Image
               source={{ uri: profilePath }}
               style={[styles.poster, favoriteActors.has(node.data.id) && styles.favoritedPoster]}
@@ -578,6 +560,23 @@ const GameScreen = ({ route, navigation }) => {
         rightPath={rightPath}
         movieA={movieA}
         movieB={movieB}
+      />
+
+      <MovieInfoModal
+        visible={!!selectedMovie}
+        movieId={selectedMovie?.id}
+        movieTitle={selectedMovie?.title}
+        moviePosterPath={selectedMovie?.posterPath}
+        onClose={() => setSelectedMovie(null)}
+      />
+
+      <ActorInfoModal
+        visible={!!selectedActor}
+        actorId={selectedActor?.id}
+        actorName={selectedActor?.name}
+        actorProfilePath={selectedActor?.profilePath}
+        onClose={() => setSelectedActor(null)}
+        onFavoriteToggled={loadFavoriteActors}
       />
 
       {loading && (

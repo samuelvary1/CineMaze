@@ -1,6 +1,6 @@
 # CineMaze Terms of Service
 
-**Last Updated: August 20, 2025**
+**Last Updated: February 7, 2026**
 
 ## Acceptance of Terms
 
@@ -8,34 +8,12 @@ By downloading, installing, or using the CineMaze mobile application (the "App")
 
 ## Description of Service
 
-CineMaze is a mobile game application that challenges users to connect movies through shared actors. The App includes:
+CineMaze is a free mobile game application that challenges users to connect movies through shared actors. The App includes:
 
-- **Free Features**: Limited daily gameplay (1 game per day)
-- **Premium Subscription**: Unlimited gameplay and additional features
+- **Gameplay**: Unlimited games connecting movies through shared actors
+- **Daily Challenges**: A new challenge each day to test your movie knowledge
 - **Movie Database**: Information and images provided by The Movie Database (TMDB)
-
-## Subscription Terms
-
-### Premium Subscription
-
-- **Price**: $0.99 USD per month (prices may vary by region)
-- **Duration**: Monthly recurring subscription
-- **Auto-Renewal**: Subscriptions automatically renew unless cancelled
-- **Free Trial**: May be offered at our discretion
-
-### Billing and Payment
-
-- **Payment Processing**: Handled by Apple App Store or Google Play Store
-- **Payment Method**: Charged to your App Store/Play Store account
-- **Price Changes**: We may change subscription prices with 30 days notice
-- **Taxes**: You are responsible for any applicable taxes
-
-### Cancellation and Refunds
-
-- **Cancellation**: Cancel anytime through your App Store/Play Store account settings
-- **Effective Date**: Cancellation takes effect at the end of current billing period
-- **Refunds**: Managed by Apple/Google according to their refund policies
-- **No Partial Refunds**: No refunds for partial subscription periods
+- **Watchlist & Favorites**: Save movies and actors you discover during gameplay
 
 ## User Responsibilities
 
@@ -45,14 +23,13 @@ You agree to use the App only for lawful purposes and in accordance with these T
 
 - **Reverse Engineer**: Attempt to reverse engineer, decompile, or hack the App
 - **Cheat or Exploit**: Use unauthorized methods to gain advantages in gameplay
-- **Share Accounts**: Share your subscription with others (unless Family Sharing is enabled)
 - **Violate Laws**: Use the App in violation of any applicable laws or regulations
+- **Abuse APIs**: Attempt to directly access or abuse third-party APIs used by the App
 
-### Account Security
+### Device Security
 
-- **Device Security**: You are responsible for securing your device and App access
-- **Unauthorized Use**: Report any unauthorized use of your subscription immediately
-- **Data Backup**: We recommend backing up your device to preserve game progress
+- You are responsible for securing your device and App access
+- We recommend backing up your device to preserve game progress
 
 ## Intellectual Property
 
@@ -103,7 +80,6 @@ TO THE MAXIMUM EXTENT PERMITTED BY LAW, WE SHALL NOT BE LIABLE FOR ANY INDIRECT,
 
 ### By You
 
-- **Cancellation**: Cancel your subscription anytime through your app store account
 - **App Deletion**: Delete the App from your device to stop using the service
 
 ### By Us
@@ -112,13 +88,7 @@ We may terminate or suspend your access if you:
 
 - Violate these Terms
 - Engage in fraudulent activity
-- Abuse the service or other users
-
-### Effect of Termination
-
-- **Data Retention**: Your local data may remain on your device
-- **Subscription**: Premium features will end at the current billing period
-- **Survival**: Sections regarding liability, intellectual property, and disputes survive termination
+- Abuse the service
 
 ## Changes to Terms
 
@@ -126,7 +96,6 @@ We may modify these Terms at any time. Changes will be effective when:
 
 - Posted within the App
 - The "Last Updated" date is changed
-- Notice is provided through the App (for material changes)
 
 Continued use after changes constitutes acceptance of the updated Terms.
 
@@ -138,7 +107,7 @@ The App is intended for users in regions where it is legally available. Some fea
 
 ### Governing Law
 
-These Terms are governed by the laws of [Your State/Country], without regard to conflict of law principles.
+These Terms are governed by applicable local laws.
 
 ### Arbitration
 
@@ -176,22 +145,6 @@ For questions about these Terms of Service, please contact us:
 
 **Email**: legal@cinemaze.app  
 **Subject**: Terms of Service Inquiry
-
-For subscription and billing questions, please contact Apple or Google customer support.
-
-## Subscription Management
-
-### Apple App Store Users
-
-- **Manage Subscription**: Settings > [Your Name] > Subscriptions
-- **Cancel**: Select CineMaze subscription and tap "Cancel Subscription"
-- **Support**: https://support.apple.com/billing
-
-### Google Play Store Users
-
-- **Manage Subscription**: Play Store > Menu > Subscriptions
-- **Cancel**: Select CineMaze and tap "Cancel subscription"
-- **Support**: https://support.google.com/googleplay/
 
 ---
 

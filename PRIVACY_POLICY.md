@@ -1,6 +1,6 @@
 # CineMaze Privacy Policy
 
-**Last Updated: August 20, 2025**
+**Last Updated: February 7, 2026**
 
 ## Introduction
 
@@ -12,25 +12,23 @@ CineMaze ("we," "our," or "us") is committed to protecting your privacy. This Pr
 
 - **Game Progress**: We store your game statistics, achievements, and progress locally on your device
 - **Watchlist Data**: Movies you save to your watchlist are stored locally on your device
-- **Subscription Information**: Your subscription status and preferences
+- **Favorite Actors**: Actors you mark as favorites are stored locally on your device
 
 ### Information Automatically Collected
 
-- **Usage Analytics**: How you interact with the app, game completion rates, and feature usage
 - **Device Information**: Device type, operating system version, and app version
 - **Performance Data**: Crash reports and performance metrics to improve app stability
 
 ### Information from Third Parties
 
-- **Movie Data**: We use The Movie Database (TMDB) API to provide movie information, posters, and cast details
-- **Payment Information**: Subscription payments are processed by Apple App Store or Google Play Store (we do not store payment details)
+- **Movie Data**: We use The Movie Database (TMDB) API and the Open Movie Database (OMDB) API to provide movie information, posters, ratings, and cast details
+- **Oscar Data**: We query Wikidata for Academy Award information
 
 ## How We Use Your Information
 
 We use the collected information to:
 
 - **Provide Core Services**: Enable game functionality and track your progress
-- **Manage Subscriptions**: Verify your subscription status and provide premium features
 - **Improve the App**: Analyze usage patterns to enhance user experience
 - **Provide Support**: Respond to your inquiries and technical issues
 - **Legal Compliance**: Comply with applicable laws and app store requirements
@@ -42,8 +40,8 @@ We do not sell, trade, or rent your personal information to third parties. We ma
 ### Service Providers
 
 - **The Movie Database (TMDB)**: For movie information and imagery
-- **Apple/Google**: For subscription management and payment processing
-- **Analytics Services**: Anonymized usage data for app improvement
+- **Open Movie Database (OMDB)**: For additional ratings data
+- **Wikidata**: For Academy Award information
 
 ### Legal Requirements
 
@@ -53,32 +51,27 @@ We may disclose information if required by law, court order, or to protect our r
 
 ### Local Storage
 
-- Most of your data (game progress, watchlist, preferences) is stored locally on your device
-- This data is not transmitted to our servers unless necessary for app functionality
+- All of your data (game progress, watchlist, favorites, preferences) is stored locally on your device
+- This data is not transmitted to our servers
+
+### Network Requests
+
+- The app makes network requests to TMDB, OMDB, and Wikidata APIs to fetch movie and actor information
+- These requests contain only movie/actor identifiers, not personal data
 
 ### Security Measures
 
 - We implement industry-standard security measures to protect your information
-- All data transmission uses encryption
-- We regularly update our security practices
+- All data transmission uses encryption (HTTPS)
 
-### Data Retention
-
-- Local data remains on your device until you delete the app or clear data
-- Analytics data is retained for up to 2 years for app improvement purposes
+> **Important:** All of your data is stored locally on your device, giving you full control over your information. Deleting the app will remove all stored data.
 
 ## Your Rights and Choices
 
 ### Access and Control
 
-- **View Your Data**: Access your game statistics and watchlist within the app
-- **Delete Data**: Use the "Clear All Data" option in Developer Settings
-- **Subscription Management**: Manage subscriptions through your App Store/Play Store account
-
-### Opt-Out Options
-
-- **Analytics**: You can opt out of analytics tracking in your device settings
-- **Notifications**: Disable app notifications in your device settings
+- **View Your Data**: Access your game statistics, watchlist, and favorites within the app
+- **Delete Data**: Uninstall the app to remove all locally stored data
 
 ## Children's Privacy
 
@@ -86,14 +79,7 @@ CineMaze is intended for users 13 years and older. We do not knowingly collect p
 
 ## Third-Party Services
 
-### The Movie Database (TMDB)
-
-We use TMDB's API to provide movie information. Their privacy policy can be found at: https://www.themoviedb.org/privacy-policy
-
-### App Store / Google Play
-
-Subscription payments are handled by:
-
+- **The Movie Database (TMDB)**: https://www.themoviedb.org/privacy-policy
 - **Apple App Store**: https://www.apple.com/privacy/
 - **Google Play Store**: https://policies.google.com/privacy
 
@@ -107,7 +93,6 @@ We may update this Privacy Policy from time to time. We will notify you of any m
 
 - Posting the new policy in the app
 - Updating the "Last Updated" date
-- Sending a notification through the app (if applicable)
 
 Your continued use of the App after changes constitutes acceptance of the updated policy.
 
